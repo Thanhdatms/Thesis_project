@@ -1,5 +1,3 @@
-from django.http import HttpResponse, JsonResponse
-
 FINAL_ANSWER = """
 You are an assistant tasked with crafting a clear, friendly, and concise response based solely on the provided question and answer. Please follow these guidelines:
 
@@ -24,7 +22,7 @@ Friendly Answer:
 """
 
 
-SQL_RETRIVER_TEMPLATE = """
+SQL_RETRIEVER_TEMPLATE = """
 You are an expert in PostgreSQL. Your task is to generate a syntactically correct SQL query based on the provided question. Follow these guidelines strictly:
 
 1. **Query Construction**:
@@ -85,15 +83,3 @@ Error_message: {error_message}
 Task: please only return sql query not explain any thing more
 
 """
-
-def final_answer_template(question, answer):
-    return FINAL_ANSWER.format(question=question, answer = answer)
-
-def sql_retriver_template(related_table, related_question, question):
-    try:
-        formatted_table = "\n".join([f"Table name: {k}\n{v}" for k, v in related_table.items()])
-        formatted_question = "\n".join([f"Question: {k}\nAI generated: {n}" for k, n in related_question.items()])
-
-        return SQL_RETRIVER_TEMPLATE.format(related_table=formatted_table, related_question=formatted_question, question=question)
-    except Exception as e:
-        return JsonResponse({"error": "Error tr"}, status=400) 

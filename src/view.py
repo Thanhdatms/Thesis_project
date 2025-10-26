@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from Chatbot.core.services.vector_service import QuestionRetriever, TableRetriever
-from Chatbot.utils.chatbot.prompt_templates import final_answer_template, sql_retriver_template
+from Chatbot.utils.chatbot.prompt_templates import final_answer_template, sql_retriever_template
 from Chatbot.infrastructure.llm.LLM_connector import *
 from Chatbot.core.services.vector_service import SQLHandler 
 from azure.ai.inference.models import UserMessage
@@ -23,7 +23,7 @@ class QuestionHandler(APIView):
         try:
             related_question = QuestionRetriever.get_related_question(question=question)
             related_table = TableRetriever.get_related_table(question=question)
-            sql_prompt = sql_retriver_template(
+            sql_prompt = sql_retriever_template(
                 related_question=related_question, 
                 related_table=related_table,
                 question=question

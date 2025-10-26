@@ -3,10 +3,12 @@ from langchain_core.messages import HumanMessage, ToolMessage, AIMessage, System
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
-from vector_service import TableRetriever, QuestionRetriever, SQLHandler
-from Chatbot.utils.chatbot.prompt_templates import sql_retriver_template, final_answer_template
-from Chatbot.infrastructure.llm.LLM_connector import get_openai_response, get_openai_vector
-from Chatbot.utils.chatbot.prompt_templates import REGENERATE_SQL_TEMPLATE
+
+from services.vector_service import TableRetriever, QuestionRetriever, SQLHandler
+from services.prompt_function import sql_retriever_template, final_answer_template
+from services.LLM_connector import get_openai_vector, get_openai_response
+
+from services.prompt_template import REGENERATE_SQL_TEMPLATE
 class AgentState(TypedDict):
     message: Annotated[list, add_messages]
     user_query: str
@@ -35,19 +37,19 @@ def retrieval_knowledge_base(state: AgentState) -> AgentState:
 
 
 def pre_sql_contextual(state: AgentState) -> AgentState:
-    sql_retriver_template = sql_retriver_template(
+    sql_retriever_template = sql_retriever_template(
         related_question=state.get("related_queries"), 
         related_table=state.get("related_schemas"),
         question=state.get("user_query")
     )
 
-    return {"sql_retriver_template": sql_retriver_template}
+    return {"sql_retriever_template": sql_retriever_template}
 
 def error_handler(state: AgentState) -> AgentState:
     return {"error": "An error occurred during processing."}
 
 def sql_generation(state: AgentState) -> AgentState:
-    query_prompt = state.get("sql_retriver_template")
+    query_prompt = state.get("sql_retriever_template")
     sql_generation = get_openai_response(query_prompt)
     extracted_sql = SQLHandler.extract_sql_response(sql_generation)
     state["sql_generation"] = extracted_sql
