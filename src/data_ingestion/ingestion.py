@@ -1,9 +1,8 @@
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
-from services.vector_service import convert_to_vector
+from services.LLM_connector import to_vector
 import os
 import uuid
-
 
 def create_schema_documents(search_client, schemas_list: list):
     """
@@ -25,7 +24,7 @@ def create_schema_documents(search_client, schemas_list: list):
 
     for schema in schemas_list:
         doc_id = str(uuid.uuid4())
-        desc_vector = convert_to_vector(schema["description"])
+        desc_vector = to_vector(schema["description"])
 
         document = {
             "id": doc_id,
@@ -39,7 +38,6 @@ def create_schema_documents(search_client, schemas_list: list):
         
     if documents:
         search_client.upload_documents(documents=documents)
-
 
 def create_question_documents(search_client, questions_list: list):
     """
@@ -60,7 +58,7 @@ def create_question_documents(search_client, questions_list: list):
 
     for question_item in questions_list:
         doc_id = str(uuid.uuid4())
-        ques_vector = convert_to_vector(question_item["question"])
+        ques_vector = to_vector(question_item["question"])
 
         document = {
             "id": doc_id,
@@ -73,3 +71,38 @@ def create_question_documents(search_client, questions_list: list):
 
     if documents:
         search_client.upload_documents(documents=documents)
+
+def load_data(schemas_list, questions_list):
+    """
+    Input:
+        schemas_list: list of schema dicts
+        questions_list: list of question dicts
+
+    Output:
+        Loads data into Azure AI Search
+    """
+
+    # logic loadingdata into format 
+    return schemas_list, questions_list
+
+
+if __name__ == "__main__":
+    # load data
+    schemas_list, questions_list = load_data(...)
+
+    # Initialize Azure AI Search client
+    schemas_search_client = SearchClient(
+        endpoint=os.getenv("AZURE_SEARCH_SCHEMA_ENDPOINT"),
+        index_name=os.getenv("AZURE_SEARCH_SCHEMAS_INDEX"),
+        credential=AzureKeyCredential(os.getenv("AZURE_SEARCH_SCHEMA_API_KEY"))
+    )
+    questions_search_client = SearchClient(
+        endpoint=os.getenv("AZURE_SEARCH_QUESTION_ENDPOINT"),
+        index_name=os.getenv("AZURE_SEARCH_QUESTIONS_INDEX"),
+        credential=AzureKeyCredential(os.getenv("AZURE_SEARCH_QUESTION_API_KEY"))
+    )
+
+    # Create and upload schema documents
+    create_schema_documents(schemas_search_client, schemas_list)
+    # Create and upload question documents
+    create_question_documents(questions_search_client, questions_list)
