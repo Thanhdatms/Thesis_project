@@ -1,4 +1,4 @@
-from src.services.prompt_template import SQL_RETRIEVER_TEMPLATE, FINAL_ANSWER
+from .prompt_template import SQL_RETRIEVER_TEMPLATE, FINAL_ANSWER
 
 
 def sql_retriever_template(related_table, related_question, question):
@@ -13,9 +13,10 @@ def sql_retriever_template(related_table, related_question, question):
     Returns:
         str: The formatted SQL retriever prompt.
     """
+    
     formatted_table = "\n".join([f"Schema name: {k}\n{v}" for k, v in related_table.items()])
     formatted_question = "\n".join([f"Question: {k}\nAI generated: {n}" for k, n in related_question.items()])
-
+    
     return SQL_RETRIEVER_TEMPLATE.format(related_table=formatted_table, related_question=formatted_question, question=question)
 
 def final_answer_template(question, answer):
