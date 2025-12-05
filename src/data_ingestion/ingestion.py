@@ -141,4 +141,4 @@ if __name__ == "__main__":
     # # Create and upload schema documents
     create_schema_documents(schemas_search_client, schemas_list)
     # # Create and upload question documents
-    create_question_documents(questions_search_client, questions_list)
+    # create_question_documents(questions_search_client, questions_list)

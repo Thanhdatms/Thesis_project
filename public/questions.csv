@@ -1,1572 +1,2600 @@
-question,sql
-What are all the products available in the store?,"SELECT 
-    product_id,
-    product_name,
-    product_description,
-    product_price,
-    product_created_at,
-    product_updated_at
-FROM 
-    products;"
-Which products cost more than 100 dollars?,"SELECT 
-    product_id,
-    product_name,
-    product_description,
-    product_price,
-    product_created_at,
-    product_updated_at
-FROM products
-WHERE product_price > 100;"
-Which items were newly listed in the store over the past 30 days?,"SELECT 
-    product_id,
-    product_name,
-    product_description,
-    product_price,
-    product_created_at
-FROM products
-WHERE product_created_at >= NOW() - INTERVAL '30 days'
-ORDER BY product_created_at DESC;"
-What is the average price of all products?,"SELECT 
-    product_id,
-    product_name,
-    ROUND(AVG(product_price), 2) AS average_price
-FROM products;"
-How many items does each category include?,"SELECT 
-    c.category_name,
-    COUNT(p.product_id) AS product_count
-FROM 
-    categories c
-LEFT JOIN category_products cp 
-    ON c.category_id = cp.category_product_category_id
-LEFT JOIN products p 
-    ON p.product_id = cp.category_product_product_id
-GROUP BY 
-    c.category_name;"
-Show me the category that has the most items.,"SELECT 
-    c.category_name,
-    COUNT(p.product_id) AS product_count
-FROM 
-    categories c
-LEFT JOIN category_products cp 
-    ON c.category_id = cp.category_product_category_id
-LEFT JOIN products p 
-    ON p.product_id = cp.category_product_product_id
-GROUP BY 
-    c.category_name
-ORDER BY 
-	product_count DESC
-LIMIT 1;"
-Can you list all products along with their categories?,"SELECT 
-    p.product_id,
-    p.product_name,
-	c.category_name
-FROM 
-    categories c
-LEFT JOIN category_products cp 
-    ON c.category_id = cp.category_product_category_id
-LEFT JOIN products p 
-    ON p.product_id = cp.category_product_product_id
-GROUP BY 
-    p.product_name, c.category_name;"
-What are the top 5 most expensive products?,"SELECT 
-    product_id,
-    product_name,
-    product_description,
-    product_price
-FROM products
+question,sql,sql
+Show all products.,"SELECT * FROM products;
+",easy
+Show product details by product name.,"SELECT * FROM products
+WHERE product_name = $1;",easy
+Search products by a keyword in their name.,"SELECT * FROM products
+WHERE product_name ILIKE '%' || $1 || '%';
+",easy
+Search products by a keyword in their description.,"SELECT * FROM products
+WHERE product_description ILIKE '%' || $1 || '%';
+",easy
+List all product names and prices.,"SELECT product_name, product_price
+FROM products;
+",easy
+List products sorted by price in ascending order.,"SELECT * FROM products
+ORDER BY product_price ASC;
+",easy
+List products sorted by price in descending order.,"SELECT * FROM products
+ORDER BY product_price DESC;
+",easy
+List products sorted by newest creation date.,"SELECT * FROM products
+ORDER BY product_created_at DESC;",easy
+List products sorted by oldest creation date.,"SELECT * FROM products
+ORDER BY product_created_at ASC;",easy
+Show the product with the highest price.,"SELECT * FROM products
 ORDER BY product_price DESC
-LIMIT 5;"
-Which products are currently discounted?,"SELECT 
-    p.product_id,
-    p.product_name,
-    p.product_price,
-    d.discount_name,
-    d.discount_percentage,
-    d.discount_start_date,
-    d.discount_end_date
-FROM 
-    products p
-JOIN product_discounts pd 
-    ON p.product_id = pd.product_discount_product_id
-JOIN discounts d 
-    ON d.discount_id = pd.product_discount_discount_id
-WHERE 
-    NOW() BETWEEN d.discount_start_date AND d.discount_end_date
-ORDER BY 
-    d.discount_percentage DESC;"
-Show me all products sold by each vendor.,"SELECT
-    v.vendor_name,
-    p.product_name,
-    p.product_price,
-    p.product_description
-FROM 
-    vendors v
-JOIN product_vendors pv 
-    ON v.vendor_id = pv.product_vendor_vendor_id
-JOIN products p 
-    ON p.product_id = pv.product_vendor_product_id
-ORDER BY 
-    v.vendor_name, p.product_name;
-"
-What tags are used most often across products?,"SELECT 
-    t.tag_name,
-    COUNT(pt.product_tag_product_id) AS usage_count
-FROM 
-    tags t
-JOIN product_tags pt 
-    ON t.tag_id = pt.product_tag_tag_id
-GROUP BY 
-    t.tag_name
-ORDER BY 
-    usage_count DESC;"
-List the products marked as new arrivals.,"SELECT 
-    p.product_id,
-    p.product_name,
-    p.product_description,
-    p.product_price,
-    p.product_created_at
-FROM 
-    products p
-JOIN product_tags pt 
-    ON p.product_id = pt.product_tag_product_id
-JOIN tags t 
-    ON t.tag_id = pt.product_tag_tag_id
-WHERE 
-    LOWER(t.tag_name) = 'new'
-ORDER BY 
-    p.product_created_at DESC;"
-How many items are in each user’s cart?,"SELECT 
-    u.user_id,
-    u.user_name,
-    COUNT(ci.cart_item_id) AS item_count
-FROM 
-    users u
-JOIN cart c 
-    ON u.user_id = c.cart_user_id
-LEFT JOIN cart_items ci 
-    ON c.cart_id = ci.cart_item_cart_id
-GROUP BY 
-    u.user_id, u.user_name
-ORDER BY 
-    item_count DESC;"
-What is the total value of each user’s cart?,"SELECT 
-    u.user_id,
-    u.user_name,
-    COALESCE(SUM(ci.cart_item_quantity * ci.cart_item_price), 0) AS total_cart_value
-FROM 
-    users u
-JOIN cart c 
-    ON u.user_id = c.cart_user_id
-LEFT JOIN cart_items ci 
-    ON c.cart_id = ci.cart_item_cart_id
-GROUP BY 
-    u.user_id, u.user_name
-ORDER BY 
-    total_cart_value DESC;"
-Show me users who haven’t added anything to their cart.,"SELECT 
-    u.user_id,
-    u.user_name
-FROM 
-    users u
-JOIN cart c 
-    ON u.user_id = c.cart_user_id
-LEFT JOIN cart_items ci 
-    ON c.cart_id = ci.cart_item_cart_id
-WHERE 
-    ci.cart_item_id IS NULL;"
-Which products appear most often in wishlists?,"SELECT 
-    p.product_id,
-    p.product_name,
-    COUNT(wi.wishlist_item_id) AS wishlist_count
-FROM 
-    products p
-JOIN wishlist_items wi 
-    ON p.product_id = wi.wishlist_item_product_id
-JOIN wishlist w 
-    ON w.wishlist_id = wi.wishlist_item_wishlist_id
-GROUP BY 
-    p.product_id, p.product_name
-ORDER BY 
-    wishlist_count DESC;"
-Can you tell me which users made a wishlist in the past week?,"SELECT 
-    u.user_id,
-    u.user_name,
-    w.wishlist_created_at
-FROM 
-    users u
-JOIN wishlist w 
-    ON u.user_id = w.wishlist_user_id
-WHERE 
-    w.wishlist_created_at >= NOW() - INTERVAL '7 days'
-ORDER BY 
-    w.wishlist_created_at DESC;"
-What is the average number of items per wishlist?,"SELECT 
-    ROUND(AVG(item_count), 2) AS average_items_per_wishlist
-FROM (
-    SELECT 
-        w.wishlist_id,
-        COUNT(wi.wishlist_item_id) AS item_count
-    FROM 
-        wishlist w
-    LEFT JOIN wishlist_items wi 
-        ON w.wishlist_id = wi.wishlist_item_wishlist_id
-    GROUP BY 
-        w.wishlist_id
-) AS wishlist_summary;"
-Show me the total number of orders per user.,"SELECT 
-    u.user_id,
-    u.user_name,
-    COUNT(o.order_id) AS total_orders
-FROM 
-    users u
-LEFT JOIN orders o 
-    ON u.user_id = o.order_user_id
-GROUP BY 
-    u.user_id, u.user_name
-ORDER BY 
-    total_orders DESC;"
-Can you show total sales value per product?,"SELECT 
-    p.product_id,
-    p.product_name,
-    COALESCE(SUM(oi.order_item_quantity * oi.order_item_price), 0) AS total_sales
-FROM 
-    products p
-LEFT JOIN order_items oi 
-    ON p.product_id = oi.order_item_product_id
-LEFT JOIN orders o 
-    ON oi.order_item_order_id = o.order_id
-WHERE 
-    o.order_status IN ('completed', 'shipped', 'delivered')
-GROUP BY 
-    p.product_id, p.product_name
-ORDER BY 
-    total_sales DESC;"
-Which orders are still pending?,"SELECT 
-    o.order_id,
-    u.user_name,
-    o.order_total,
-    o.order_status,
-    o.order_created_at
-FROM 
-    orders o
-JOIN users u 
-    ON o.order_user_id = u.user_id
-WHERE 
-    LOWER(o.order_status) = 'pending'
-ORDER BY 
-    o.order_created_at DESC;"
-Show me the overall revenue from all completed orders.,"SELECT 
-    ROUND(COALESCE(SUM(oi.order_item_quantity * oi.order_item_price), 0), 2) AS total_revenue
-FROM 
-    orders o
-JOIN order_items oi 
-    ON o.order_id = oi.order_item_order_id
-WHERE 
-    LOWER(o.order_status) IN ('completed', 'shipped', 'delivered');"
-List every order placed during the past 7 days.,"SELECT 
-    o.order_id,
-    o.order_user_id,
-    o.order_total,
-    o.order_status,
-    o.order_created_at
-FROM 
-    orders o
-WHERE 
-    o.order_created_at >= NOW() - INTERVAL '7 days'
-ORDER BY 
-    o.order_created_at DESC;"
-What is the average order total?,"SELECT 
-    ROUND(AVG(o.order_total), 2) AS average_order_total
-FROM 
-    orders o
-WHERE 
-    LOWER(o.order_status) IN ('completed', 'shipped', 'delivered');"
-Which users spent more than $500 in total?,"SELECT 
-    u.user_id,
-    u.user_name,
-    SUM(o.order_total) AS total_spent
-FROM 
-    users u
-JOIN orders o 
-    ON u.user_id = o.order_user_id
-WHERE 
-    LOWER(o.order_status) IN ('completed', 'shipped', 'delivered')
-GROUP BY 
-    u.user_id, u.user_name
-HAVING 
-    SUM(o.order_total) > 500
-ORDER BY 
-    total_spent DESC;"
-What is the total quantity sold for each product?,"SELECT 
-    p.product_id,
-    p.product_name,
-    COALESCE(SUM(oi.order_item_quantity), 0) AS total_quantity_sold
-FROM 
-    products p
-LEFT JOIN order_items oi 
-    ON p.product_id = oi.order_item_product_id
-LEFT JOIN orders o 
-    ON oi.order_item_order_id = o.order_id
-WHERE 
-    LOWER(o.order_status) IN ('completed', 'shipped', 'delivered')  -- only successful sales
-GROUP BY 
-    p.product_id, p.product_name
-ORDER BY 
-    total_quantity_sold DESC;"
-What’s the order with the highest purchase value?,"SELECT 
-    o.order_id,
-    o.order_user_id,
-    o.order_total,
-    o.order_status,
-    o.order_created_at
-FROM 
-    orders o
-WHERE 
-    o.order_total = (
-        SELECT MAX(order_total) FROM orders
-        WHERE LOWER(order_status) IN ('completed', 'shipped', 'delivered')
-    );
-"
-What pairs of products are most frequently ordered together?,"SELECT 
-    p1.product_name AS product_a,
-    p2.product_name AS product_b,
-    COUNT(*) AS times_purchased_together
-FROM 
-    order_items oi1
-JOIN order_items oi2 
-    ON oi1.order_item_order_id = oi2.order_item_order_id
-    AND oi1.order_item_product_id < oi2.order_item_product_id 
-JOIN products p1 
-    ON oi1.order_item_product_id = p1.product_id
-JOIN products p2 
-    ON oi2.order_item_product_id = p2.product_id
-JOIN orders o 
-    ON oi1.order_item_order_id = o.order_id
-WHERE 
-    LOWER(o.order_status) IN ('completed', 'shipped', 'delivered')
-GROUP BY 
-    p1.product_name, p2.product_name
-ORDER BY 
-    times_purchased_together DESC
-LIMIT 10;"
-Which orders were paid successfully?,"SELECT 
-    o.order_id,
-    o.order_user_id,
-    o.order_total,
-    o.order_status,
-    p.payment_status,
-    p.payment_date
-FROM 
-    orders o
-JOIN payments p 
-    ON o.order_id = p.payment_order_id
-WHERE 
-    LOWER(p.payment_status) = 'successful'
-ORDER BY 
-    p.payment_date DESC;"
-What payment methods are most used?,"SELECT 
-    p.payment_method,
-    COUNT(t.transaction_id) AS times_used
-FROM 
-    payments p
-JOIN transactions t 
-    ON p.payment_id = t.transaction_payment_id
-GROUP BY 
-    p.payment_method
-ORDER BY 
-    times_used DESC;
-"
-List the orders that used discount coupons.,"SELECT 
-    o.order_id,
-    o.order_user_id,
-    o.order_total,
-    c.coupon_code,
-    c.coupon_description,
-    c.coupon_discount_percentage,
-    o.order_created_at
-FROM 
-    orders o
-JOIN order_coupons oc 
-    ON o.order_id = oc.order_coupon_order_id
-JOIN coupons c 
-    ON oc.order_coupon_coupon_id = c.coupon_id
-ORDER BY 
-    o.order_created_at DESC;"
-What is the average discount percentage of all coupons?,"SELECT 
-    ROUND(AVG(coupon_discount_percentage), 2) AS average_discount_percentage
-FROM 
-    coupons;"
-How many transactions failed last month?,"SELECT 
-    COUNT(*) AS failed_transactions_last_month
-FROM 
-    transactions
-WHERE 
-    LOWER(transaction_status) = 'failed'
-    AND DATE_TRUNC('month', transaction_created_at) = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month');
-"
-Which coupons expired recently?,"SELECT 
-    coupon_id,
-    coupon_code,
-    coupon_description,
-    coupon_discount_percentage,
-    coupon_end_date
-FROM 
-    coupons
-WHERE 
-    coupon_end_date < NOW()
-ORDER BY 
-    coupon_end_date DESC;
-"
-What is the total discount amount given through coupons?,"SELECT 
-    ROUND(SUM(o.order_total * (c.coupon_discount_percentage / 100.0)), 2) AS total_discount_amount
-FROM 
-    orders o
-JOIN order_coupons oc 
-    ON o.order_id = oc.order_coupon_order_id
-JOIN coupons c 
-    ON oc.order_coupon_coupon_id = c.coupon_id;
-"
-How many payments are still pending?,"SELECT 
-    COUNT(*) AS pending_payments
-FROM 
-    payments
-WHERE 
-    LOWER(payment_status) = 'pending';"
-Which discount codes were applied to more than one order?,"SELECT 
-    c.coupon_id,
-    c.coupon_code,
-    c.coupon_description,
-    COUNT(DISTINCT oc.order_coupon_order_id) AS times_used
-FROM 
-    coupons c
-JOIN order_coupons oc 
-    ON c.coupon_id = oc.order_coupon_coupon_id
-GROUP BY 
-    c.coupon_id, c.coupon_code, c.coupon_description
-HAVING 
-    COUNT(DISTINCT oc.order_coupon_order_id) > 1
-ORDER BY 
-    times_used DESC;
-"
-Which orders have already been shipped?,"SELECT 
-    o.order_id,
-    o.order_user_id,
-    o.order_total,
-    o.order_status,
-    o.order_created_at,
-    o.order_shipped_at
-FROM 
-    orders o
-WHERE 
-    LOWER(o.order_status) = 'shipped'
-ORDER BY 
-    o.order_shipped_at DESC;"
-What is the status of each shipment?,"SELECT 
-    s.shipment_id,
-    o.order_id,
-    o.order_user_id,
-    s.shipment_status,
-    s.shipment_created_at,
-    s.shipment_updated_at
-FROM 
-    shipments s
-JOIN orders o 
-    ON s.shipment_order_id = o.order_id
-ORDER BY 
-    s.shipment_created_at DESC;"
-Which users have returned products?,"SELECT 
-    DISTINCT u.user_id,
-    u.user_name,
-    u.user_email
-FROM 
-    users u
-JOIN returns r 
-    ON u.user_id = r.return_user_id
-ORDER BY 
-    u.user_name;"
-What are the most common reasons for returns?,"SELECT 
-    r.return_reason,
-    COUNT(*) AS times_reported
-FROM 
-    returns r
-GROUP BY 
-    r.return_reason
-ORDER BY 
-    times_reported DESC;
-"
-How many returns were created this month?,"SELECT 
-    COUNT(*) AS returns_created_this_month
-FROM 
-    returns
-WHERE 
-    DATE_TRUNC('month', return_created_at) = DATE_TRUNC('month', CURRENT_DATE);"
-What percentage of orders were returned?,"SELECT 
-    ROUND(
-        (COUNT(DISTINCT r.return_order_id)::DECIMAL / COUNT(DISTINCT o.order_id)) * 100, 
-        2
-    ) AS return_percentage
-FROM 
-    orders o
-LEFT JOIN returns r 
-    ON o.order_id = r.return_order_id;"
-Show me the average processing time from order to shipment,"SELECT 
-    ROUND(
-        AVG(EXTRACT(EPOCH FROM (s.shipment_created_at - o.order_created_at)) / 3600), 
-        2
-    ) AS avg_hours_between_order_and_shipment
-FROM 
-    orders o
-JOIN shipments s 
-    ON o.order_id = s.shipment_order_id
-WHERE 
-    s.shipment_created_at IS NOT NULL
-    AND o.order_created_at IS NOT NULL;"
-,
-List each product along with its category and vendor name.,"SELECT 
-    p.product_id,
-    p.product_name,
-    c.category_name,
-    v.vendor_name
-FROM products AS p
-JOIN category_products AS cp
-    ON p.product_id = cp.category_product_product_id
-JOIN categories AS c
-    ON cp.category_product_category_id = c.category_id
-JOIN product_vendors AS pv
-    ON p.product_id = pv.product_vendor_product_id
-JOIN vendors AS v
-    ON pv.product_vendor_vendor_id = v.vendor_id
-ORDER BY p.product_id;"
-Which vendors supply products priced above the average product price?,"SELECT DISTINCT
-    v.vendor_id,
-    v.vendor_name,
-    v.vendor_email
-FROM vendors AS v
-JOIN product_vendors AS pv
-    ON v.vendor_id = pv.product_vendor_vendor_id
-JOIN products AS p
-    ON pv.product_vendor_product_id = p.product_id
-WHERE p.product_price > (
-    SELECT AVG(product_price)
-    FROM products
-)
-ORDER BY v.vendor_name;"
-“Show me categories that have products from multiple vendors.,"SELECT 
-    c.category_id,
-    c.category_name
-FROM categories AS c
-JOIN category_products AS cp
-    ON c.category_id = cp.category_product_category_id
-JOIN products AS p
-    ON cp.category_product_product_id = p.product_id
-JOIN product_vendors AS pv
-    ON p.product_id = pv.product_vendor_product_id
+LIMIT 1;",easy
+Show the product with the lowest price.,"SELECT * FROM products
+ORDER BY product_price ASC
+LIMIT 1;",easy
+Find products with a price lower than a given value.,"SELECT * FROM products
+WHERE product_price < $1;
+",easy
+Find products with a price higher than a given value.,"SELECT * FROM products
+WHERE product_price > $1;
+",easy
+Find products with a price within a given range.,"SELECT * FROM products
+WHERE product_price BETWEEN $1 AND $2;",easy
+List products updated after a given date.,"SELECT * FROM products
+WHERE product_updated_at > $1;
+",easy
+List products updated before a given date.,"SELECT * FROM products
+WHERE product_updated_at < $1;",easy
+List products created after a given date.,"SELECT * FROM products
+WHERE product_created_at > $1;
+",easy
+List products created before a given date.,"SELECT * FROM products
+WHERE product_created_at < $1;
+",easy
+Check if a product with a specific name exists.,"SELECT EXISTS(
+    SELECT 1 FROM products
+    WHERE product_name = $1
+);
+",easy
+Show products whose names start with a given text.,"SELECT * FROM products
+WHERE product_name ILIKE $1 || '%';
+",easy
+Which category has the most expensive products on average?,"SELECT 
+  c.category_name,
+  AVG(p.product_price) as avg_price,
+  COUNT(p.product_id) as product_count
+FROM categories c
+JOIN category_products cp ON c.category_id = cp.category_product_category_id
+JOIN products p ON cp.category_product_product_id = p.product_id
 GROUP BY c.category_id, c.category_name
-HAVING COUNT(DISTINCT pv.product_vendor_vendor_id) > 1
-ORDER BY c.category_name;"
-Show the total number of products and average price per category.,"SELECT 
-    c.category_id,
-    c.category_name,
-    COUNT(p.product_id) AS total_products,
-    ROUND(AVG(p.product_price), 2) AS average_price
-FROM categories AS c
-JOIN category_products AS cp
-    ON c.category_id = cp.category_product_category_id
-JOIN products AS p
-    ON cp.category_product_product_id = p.product_id
+ORDER BY avg_price DESC
+LIMIT 1;",medium
+"Show me all products in the ""Electronics"" category","SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price,
+  p.product_description
+FROM products p
+JOIN category_products cp ON p.product_id = cp.category_product_product_id
+JOIN categories c ON cp.category_product_category_id = c.category_id
+WHERE c.category_name = 'Electronics'
+ORDER BY p.product_name;",medium
+Which categories have fewer than 5 products?,"SELECT 
+  c.category_name,
+  COUNT(cp.category_product_product_id) as product_count
+FROM categories c
+LEFT JOIN category_products cp ON c.category_id = cp.category_product_category_id
 GROUP BY c.category_id, c.category_name
-ORDER BY c.category_name;"
-Show products that haven’t been tagged.,"SELECT 
-    p.product_id,
-    p.product_name
-FROM products AS p
-LEFT JOIN product_tags AS pt
-    ON p.product_id = pt.product_tag_product_id
-WHERE pt.product_tag_tag_id IS NULL
-ORDER BY p.product_name;"
-List vendors that supply more than five products.,"SELECT 
-    v.vendor_id,
-    v.vendor_name,
-    COUNT(DISTINCT pv.product_vendor_product_id) AS total_products
-FROM vendors AS v
-JOIN product_vendors AS pv
-    ON v.vendor_id = pv.product_vendor_vendor_id
+HAVING COUNT(cp.category_product_product_id) < 5
+ORDER BY product_count DESC;",medium
+What is the total value of inventory by category?,"SELECT 
+  c.category_name,
+  COUNT(p.product_id) as product_count,
+  SUM(p.product_price) as total_inventory_value,
+  ROUND(AVG(p.product_price)::numeric, 2) as avg_price
+FROM categories c
+JOIN category_products cp ON c.category_id = cp.category_product_category_id
+JOIN products p ON cp.category_product_product_id = p.product_id
+GROUP BY c.category_id, c.category_name
+ORDER BY total_inventory_value DESC;",medium
+"Which products are tagged as ""Bestseller"" or ""Top Rated""?","SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price,
+  STRING_AGG(t.tag_name, ', ' ORDER BY t.tag_name) as tags
+FROM products p
+JOIN product_tags pt ON p.product_id = pt.product_tag_product_id
+JOIN tags t ON pt.product_tag_tag_id = t.tag_id
+WHERE t.tag_name IN ('Bestseller', 'Top Rated')
+GROUP BY p.product_id, p.product_name, p.product_price
+ORDER BY p.product_name;",medium
+"How many products have each tag?
+","SELECT 
+  t.tag_name,
+  COUNT(pt.product_tag_product_id) as product_count
+FROM tags t
+LEFT JOIN product_tags pt ON t.tag_id = pt.product_tag_tag_id
+GROUP BY t.tag_id, t.tag_name
+ORDER BY product_count DESC;",medium
+"What is the average price of products tagged as ""Premium"" vs ""Budget""?
+","SELECT 
+  t.tag_name,
+  COUNT(p.product_id) as product_count,
+  ROUND(AVG(p.product_price)::numeric, 2) as avg_price,
+  ROUND(MIN(p.product_price)::numeric, 2) as min_price,
+  ROUND(MAX(p.product_price)::numeric, 2) as max_price
+FROM tags t
+JOIN product_tags pt ON t.tag_id = pt.product_tag_tag_id
+JOIN products p ON pt.product_tag_product_id = p.product_id
+WHERE t.tag_name IN ('Premium', 'Budget')
+GROUP BY t.tag_id, t.tag_name
+ORDER BY avg_price DESC;",medium
+Which products have the most tags assigned?,"SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price,
+  COUNT(pt.product_tag_tag_id) as tag_count,
+  STRING_AGG(t.tag_name, ', ' ORDER BY t.tag_name) as tags
+FROM products p
+JOIN product_tags pt ON p.product_id = pt.product_tag_product_id
+JOIN tags t ON pt.product_tag_tag_id = t.tag_id
+GROUP BY p.product_id, p.product_name, p.product_price
+ORDER BY tag_count DESC
+LIMIT 10;",medium
+"Show me all ""Eco-Friendly"" tagged products and their prices","SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price,
+  p.product_description
+FROM products p
+JOIN product_tags pt ON p.product_id = pt.product_tag_product_id
+JOIN tags t ON pt.product_tag_tag_id = t.tag_id
+WHERE t.tag_name = 'Eco-Friendly'
+ORDER BY p.product_price DESC;",medium
+Which tags are most commonly used across products?,"SELECT 
+  t.tag_name,
+  COUNT(pt.product_tag_product_id) as usage_count,
+  ROUND(COUNT(pt.product_tag_product_id) * 100.0 / (SELECT COUNT(*) FROM products), 2) as usage_percentage
+FROM tags t
+JOIN product_tags pt ON t.tag_id = pt.product_tag_tag_id
+GROUP BY t.tag_id, t.tag_name
+ORDER BY usage_count DESC
+LIMIT 15;",medium
+Which vendor supplies the most products?,"SELECT 
+  v.vendor_name,
+  v.vendor_email,
+  COUNT(pv.product_vendor_product_id) as product_count
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+GROUP BY v.vendor_id, v.vendor_name, v.vendor_email
+ORDER BY product_count DESC
+LIMIT 1;",medium
+What is the average product price per vendor?,"SELECT 
+  v.vendor_name,
+  COUNT(p.product_id) as product_count,
+  ROUND(AVG(p.product_price)::numeric, 2) as avg_price,
+  ROUND(MIN(p.product_price)::numeric, 2) as min_price,
+  ROUND(MAX(p.product_price)::numeric, 2) as max_price,
+  ROUND(SUM(p.product_price)::numeric, 2) as total_inventory_value
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
 GROUP BY v.vendor_id, v.vendor_name
-HAVING COUNT(DISTINCT pv.product_vendor_product_id) > 5
-ORDER BY total_products DESC;"
-List all products that appear in several categories.,"SELECT 
+ORDER BY avg_price DESC;",medium
+Show me all products supplied by a specific vendor,"SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price,
+  p.product_description,
+  v.vendor_name
+FROM products p
+JOIN product_vendors pv ON p.product_id = pv.product_vendor_product_id
+JOIN vendors v ON pv.product_vendor_vendor_id = v.vendor_id
+WHERE v.vendor_name = 'Vendor LLC 6'  -- Replace with specific vendor name
+ORDER BY p.product_price DESC;",medium
+Which vendors supply products across multiple categories?,"SELECT 
+  v.vendor_name,
+  COUNT(DISTINCT c.category_id) as category_count,
+  STRING_AGG(DISTINCT c.category_name, ', ' ORDER BY c.category_name) as categories,
+  COUNT(DISTINCT p.product_id) as product_count
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+JOIN category_products cp ON p.product_id = cp.category_product_product_id
+JOIN categories c ON cp.category_product_category_id = c.category_id
+GROUP BY v.vendor_id, v.vendor_name
+HAVING COUNT(DISTINCT c.category_id) > 1
+ORDER BY category_count DESC;",medium
+Which vendor has the highest total product inventory value?,"SELECT 
+  v.vendor_name,
+  COUNT(p.product_id) as product_count,
+  ROUND(SUM(p.product_price)::numeric, 2) as total_inventory_value,
+  ROUND(AVG(p.product_price)::numeric, 2) as avg_price
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY total_inventory_value DESC
+LIMIT 1;",medium
+Are there any products without an assigned vendor?,"SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price,
+  p.product_created_at
+FROM products p
+LEFT JOIN product_vendors pv ON p.product_id = pv.product_vendor_product_id
+WHERE pv.product_vendor_id IS NULL
+ORDER BY p.product_created_at DESC;",medium
+Which products currently have active discounts?,"SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price,
+  d.discount_name,
+  d.discount_percentage,
+  ROUND((p.product_price * (1 - d.discount_percentage / 100.0))::numeric, 2) as discounted_price,
+  ROUND((p.product_price * d.discount_percentage / 100.0)::numeric, 2) as savings,
+  d.discount_start_date,
+  d.discount_end_date
+FROM products p
+JOIN product_discounts pd ON p.product_id = pd.product_discount_product_id
+JOIN discounts d ON pd.product_discount_discount_id = d.discount_id
+WHERE d.discount_start_date <= NOW()
+  AND d.discount_end_date >= NOW()
+ORDER BY d.discount_percentage DESC;",medium
+What is the discounted price for each product with a discount?,"SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price as original_price,
+  d.discount_percentage,
+  ROUND((p.product_price * (1 - d.discount_percentage / 100.0))::numeric, 2) as discounted_price,
+  ROUND((p.product_price * d.discount_percentage / 100.0)::numeric, 2) as savings_amount,
+  d.discount_name
+FROM products p
+JOIN product_discounts pd ON p.product_id = pd.product_discount_product_id
+JOIN discounts d ON pd.product_discount_discount_id = d.discount_id
+ORDER BY savings_amount DESC;",medium
+"Which discount promotion covers the most products?","SELECT 
+  d.discount_name,
+  d.discount_percentage,
+  COUNT(pd.product_discount_product_id) as product_count,
+  d.discount_start_date,
+  d.discount_end_date,
+  CASE 
+    WHEN d.discount_end_date >= NOW() THEN 'Active'
+    ELSE 'Expired'
+  END as status
+FROM discounts d
+LEFT JOIN product_discounts pd ON d.discount_id = pd.product_discount_discount_id
+GROUP BY d.discount_id, d.discount_name, d.discount_percentage, d.discount_start_date, d.discount_end_date
+ORDER BY product_count DESC
+LIMIT 1;",medium
+Show me products with discounts greater than 30%,"SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price as original_price,
+  d.discount_percentage,
+  ROUND((p.product_price * (1 - d.discount_percentage / 100.0))::numeric, 2) as discounted_price,
+  ROUND((p.product_price * d.discount_percentage / 100.0)::numeric, 2) as savings,
+  d.discount_name
+FROM products p
+JOIN product_discounts pd ON p.product_id = pd.product_discount_product_id
+JOIN discounts d ON pd.product_discount_discount_id = d.discount_id
+WHERE d.discount_percentage > 30
+ORDER BY d.discount_percentage DESC, savings DESC;",medium
+"What is the total savings amount across all discounted products?
+","SELECT 
+  COUNT(DISTINCT p.product_id) as discounted_products,
+  ROUND(SUM(p.product_price)::numeric, 2) as total_original_value,
+  ROUND(AVG(d.discount_percentage)::numeric, 2) as avg_discount_percentage,
+  ROUND(SUM(p.product_price * d.discount_percentage / 100.0)::numeric, 2) as total_savings_amount,
+  ROUND(SUM(p.product_price * (1 - d.discount_percentage / 100.0))::numeric, 2) as total_discounted_value
+FROM products p
+JOIN product_discounts pd ON p.product_id = pd.product_discount_product_id
+JOIN discounts d ON pd.product_discount_discount_id = d.discount_id;",medium
+"Which expensive products (>$400) have discounts applied?
+","SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price as original_price,
+  d.discount_percentage,
+  ROUND((p.product_price * (1 - d.discount_percentage / 100.0))::numeric, 2) as discounted_price,
+  ROUND((p.product_price * d.discount_percentage / 100.0)::numeric, 2) as savings,
+  d.discount_name
+FROM products p
+JOIN product_discounts pd ON p.product_id = pd.product_discount_product_id
+JOIN discounts d ON pd.product_discount_discount_id = d.discount_id
+WHERE p.product_price > 400
+ORDER BY p.product_price DESC;",medium
+"Which products have been ordered the most (by quantity)?
+","SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price,
+  SUM(oi.order_item_quantity) as total_quantity_sold,
+  COUNT(DISTINCT oi.order_item_order_id) as order_count
+FROM products p
+JOIN order_items oi ON p.product_id = oi.order_item_product_id
+GROUP BY p.product_id, p.product_name, p.product_price
+ORDER BY total_quantity_sold DESC
+LIMIT 10;",medium
+Show me wishlist products that have never been purchased,"SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price,
+  COUNT(DISTINCT wi.wishlist_item_wishlist_id) as wishlist_count
+FROM products p
+JOIN wishlist_items wi ON p.product_id = wi.wishlist_item_product_id
+LEFT JOIN order_items oi ON p.product_id = oi.order_item_product_id
+WHERE oi.order_item_id IS NULL
+GROUP BY p.product_id, p.product_name, p.product_price
+ORDER BY wishlist_count DESC;",hard
+ Which products are frequently wishlisted but rarely bought?,"SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price,
+  COUNT(DISTINCT wi.wishlist_item_wishlist_id) as wishlist_count,
+  COUNT(DISTINCT oi.order_item_order_id) as order_count,
+  CASE 
+    WHEN COUNT(DISTINCT oi.order_item_order_id) = 0 THEN 0
+    ELSE ROUND((COUNT(DISTINCT oi.order_item_order_id)::numeric / COUNT(DISTINCT wi.wishlist_item_wishlist_id) * 100), 2)
+  END as conversion_rate
+FROM products p
+JOIN wishlist_items wi ON p.product_id = wi.wishlist_item_product_id
+LEFT JOIN order_items oi ON p.product_id = oi.order_item_product_id
+GROUP BY p.product_id, p.product_name, p.product_price
+HAVING COUNT(DISTINCT wi.wishlist_item_wishlist_id) >= 3
+ORDER BY wishlist_count DESC, order_count ASC
+LIMIT 20;",hard
+What is the total value of products across all wishlists?,"SELECT 
+  COUNT(DISTINCT wi.wishlist_item_wishlist_id) as total_wishlists,
+  COUNT(DISTINCT p.product_id) as unique_products,
+  COUNT(wi.wishlist_item_id) as total_wishlist_items,
+  ROUND(SUM(p.product_price)::numeric, 2) as total_wishlist_value,
+  ROUND(AVG(p.product_price)::numeric, 2) as avg_product_price
+FROM products p
+JOIN wishlist_items wi ON p.product_id = wi.wishlist_item_product_id;",hard
+ Which categories have products most frequently added to wishlists?,"SELECT 
+  c.category_name,
+  COUNT(DISTINCT p.product_id) as product_count,
+  COUNT(DISTINCT wi.wishlist_item_wishlist_id) as wishlist_count,
+  COUNT(wi.wishlist_item_id) as total_wishlist_items,
+  ROUND(AVG(p.product_price)::numeric, 2) as avg_product_price
+FROM categories c
+JOIN category_products cp ON c.category_id = cp.category_product_category_id
+JOIN products p ON cp.category_product_product_id = p.product_id
+JOIN wishlist_items wi ON p.product_id = wi.wishlist_item_product_id
+GROUP BY c.category_id, c.category_name
+ORDER BY total_wishlist_items DESC;",hard
+"Show me products with discounts, their categories, vendors, and current sales","SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price as original_price,
+  d.discount_percentage,
+  ROUND((p.product_price * (1 - d.discount_percentage / 100.0))::numeric, 2) as discounted_price,
+  v.vendor_name,
+  STRING_AGG(DISTINCT c.category_name, ', ' ORDER BY c.category_name) as categories,
+  COUNT(DISTINCT oi.order_item_order_id) as order_count,
+  SUM(oi.order_item_quantity) as total_quantity_sold,
+  ROUND(SUM(oi.order_item_price * oi.order_item_quantity)::numeric, 2) as total_revenue
+FROM products p
+JOIN product_discounts pd ON p.product_id = pd.product_discount_product_id
+JOIN discounts d ON pd.product_discount_discount_id = d.discount_id
+LEFT JOIN product_vendors pv ON p.product_id = pv.product_vendor_product_id
+LEFT JOIN vendors v ON pv.product_vendor_vendor_id = v.vendor_id
+LEFT JOIN category_products cp ON p.product_id = cp.category_product_product_id
+LEFT JOIN categories c ON cp.category_product_category_id = c.category_id
+LEFT JOIN order_items oi ON p.product_id = oi.order_item_product_id
+GROUP BY p.product_id, p.product_name, p.product_price, d.discount_percentage, v.vendor_name
+ORDER BY total_revenue DESC NULLS LAST;",hard
+Which vendor's products have the highest review ratings?,"SELECT 
+  v.vendor_name,
+  COUNT(DISTINCT p.product_id) as product_count,
+  COUNT(r.review_id) as total_reviews,
+  ROUND(AVG(r.review_rating)::numeric, 2) as avg_rating,
+  MIN(r.review_rating) as min_rating,
+  MAX(r.review_rating) as max_rating,
+  ROUND(AVG(p.product_price)::numeric, 2) as avg_product_price
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+LEFT JOIN reviews r ON p.product_id = r.review_product_id
+GROUP BY v.vendor_id, v.vendor_name
+HAVING COUNT(r.review_id) >= 5  -- Vendors with at least 5 reviews
+ORDER BY avg_rating DESC, total_reviews DESC;",hard
+Compare products: those frequently ordered vs those in carts but not purchased,"WITH OrderedProducts AS (
+  SELECT 
     p.product_id,
     p.product_name,
-    COUNT(DISTINCT cp.category_product_category_id) AS category_count
-FROM products AS p
-JOIN category_products AS cp
-    ON p.product_id = cp.category_product_product_id
-GROUP BY p.product_id, p.product_name
-HAVING COUNT(DISTINCT cp.category_product_category_id) > 1
-ORDER BY category_count DESC, p.product_name;"
-Which products have more than three tags assigned?,"SELECT 
+    p.product_price,
+    COUNT(DISTINCT oi.order_item_order_id) as order_count,
+    SUM(oi.order_item_quantity) as total_ordered
+  FROM products p
+  JOIN order_items oi ON p.product_id = oi.order_item_product_id
+  GROUP BY p.product_id, p.product_name, p.product_price
+),
+CartProducts AS (
+  SELECT 
     p.product_id,
-    p.product_name,
-    COUNT(DISTINCT pt.product_tag_tag_id) AS tag_count
-FROM products AS p
-JOIN product_tags AS pt
-    ON p.product_id = pt.product_tag_product_id
-GROUP BY p.product_id, p.product_name
-HAVING COUNT(DISTINCT pt.product_tag_tag_id) > 3
-ORDER BY tag_count DESC, p.product_name;"
-What is the most expensive product in each category?,"SELECT 
-    c.category_id,
-    c.category_name,
-    p.product_id,
-    p.product_name,
-    p.product_price
-FROM categories AS c
-JOIN category_products AS cp
-    ON c.category_id = cp.category_product_category_id
-JOIN products AS p
-    ON cp.category_product_product_id = p.product_id
-WHERE p.product_price = (
-    SELECT MAX(p2.product_price)
-    FROM category_products AS cp2
-    JOIN products AS p2
-        ON cp2.category_product_product_id = p2.product_id
-    WHERE cp2.category_product_category_id = c.category_id
+    COUNT(DISTINCT ci.cart_item_cart_id) as cart_count,
+    SUM(ci.cart_item_quantity) as total_in_cart
+  FROM products p
+  JOIN cart_items ci ON p.product_id = ci.cart_item_product_id
+  JOIN cart c ON ci.cart_item_cart_id = c.cart_id
+  WHERE c.cart_status = 'active'
+  GROUP BY p.product_id
 )
-ORDER BY c.category_name;"
-Show the number of new products added per month in the current year.,"SELECT 
-    DATE_TRUNC('month', product_created_at) AS month,
-    COUNT(*) AS total_products
-FROM products
-WHERE EXTRACT(YEAR FROM product_created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
-GROUP BY DATE_TRUNC('month', product_created_at)
-ORDER BY month;"
-Which discounts are active right now?,"SELECT 
-    discount_id,
-    discount_name,
-    discount_percentage,
-    discount_start_date,
-    discount_end_date
-FROM discounts
-WHERE CURRENT_DATE BETWEEN discount_start_date AND discount_end_date
-ORDER BY discount_end_date;"
-Find which discounts cover the most products,"SELECT 
-    d.discount_id,
-    d.discount_name,
-    COUNT(DISTINCT pd.product_discount_product_id) AS total_products
-FROM discounts AS d
-JOIN product_discounts AS pd
-    ON d.discount_id = pd.product_discount_discount_id
-GROUP BY d.discount_id, d.discount_name
-ORDER BY total_products DESC, d.discount_name;"
-Show products that are associated with both a discount and a coupon.,"SELECT DISTINCT
-    p.product_id,
-    p.product_name
-FROM products AS p
-LEFT JOIN product_discounts AS pd
-    ON p.product_id = pd.product_discount_product_id
-LEFT JOIN order_items AS oi
-    ON p.product_id = oi.order_item_product_id
-LEFT JOIN order_coupons AS oc
-    ON oi.order_item_order_id = oc.order_coupon_order_id
-WHERE pd.product_discount_discount_id IS NOT NULL
-  AND oc.order_coupon_coupon_id IS NOT NULL
-ORDER BY p.product_name;
-"
-Which coupons give more than 20% off and are currently active?,"SELECT 
-    coupon_id,
-    coupon_code,
-    coupon_description,
-    coupon_discount_percentage,
-    coupon_start_date,
-    coupon_end_date
-FROM coupons
-WHERE coupon_discount_percentage > 20
-  AND CURRENT_DATE BETWEEN coupon_start_date AND coupon_end_date
-ORDER BY coupon_discount_percentage DESC;"
-Find the average discount percentage per product.,"SELECT 
-    p.product_id,
-    p.product_name,
-    ROUND(AVG(d.discount_percentage), 2) AS average_discount_percentage
-FROM products AS p
-JOIN product_discounts AS pd
-    ON p.product_id = pd.product_discount_product_id
-JOIN discounts AS d
-    ON pd.product_discount_discount_id = d.discount_id
-GROUP BY p.product_id, p.product_name
-ORDER BY average_discount_percentage DESC;"
-Identify coupons that overlap in active date ranges.,"SELECT 
-    c1.coupon_id AS coupon_id_1,
-    c1.coupon_code AS coupon_code_1,
-    c2.coupon_id AS coupon_id_2,
-    c2.coupon_code AS coupon_code_2,
-    c1.coupon_start_date AS coupon_1_start,
-    c1.coupon_end_date AS coupon_1_end,
-    c2.coupon_start_date AS coupon_2_start,
-    c2.coupon_end_date AS coupon_2_end
-FROM coupons AS c1
-JOIN coupons AS c2
-    ON c1.coupon_id < c2.coupon_id
-   AND c1.coupon_start_date <= c2.coupon_end_date
-   AND c2.coupon_start_date <= c1.coupon_end_date
-ORDER BY c1.coupon_id, c2.coupon_id;"
-Find all discounts that expired within the last 30 days.,"SELECT 
-    discount_id,
-    discount_name,
-    discount_percentage,
-    discount_start_date,
-    discount_end_date
-FROM discounts
-WHERE discount_end_date BETWEEN (CURRENT_DATE - INTERVAL '30 days') AND CURRENT_DATE
-ORDER BY discount_end_date DESC;"
-List all products that have multiple discounts assigned.,"SELECT 
+SELECT 
+  op.product_id,
+  op.product_name,
+  op.product_price,
+  COALESCE(op.order_count, 0) as order_count,
+  COALESCE(op.total_ordered, 0) as total_ordered,
+  COALESCE(cp.cart_count, 0) as cart_count,
+  COALESCE(cp.total_in_cart, 0) as total_in_cart,
+  CASE 
+    WHEN COALESCE(cp.cart_count, 0) = 0 THEN 'N/A'
+    ELSE ROUND((COALESCE(op.order_count, 0)::numeric / cp.cart_count * 100), 2) || '%'
+  END as cart_to_order_conversion
+FROM OrderedProducts op
+LEFT JOIN CartProducts cp ON op.product_id = cp.product_id
+ORDER BY op.order_count DESC
+LIMIT 20;",hard
+" Which tagged products (""New"", ""Trending"") are selling the most?","SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price,
+  STRING_AGG(DISTINCT t.tag_name, ', ' ORDER BY t.tag_name) as tags,
+  COUNT(DISTINCT oi.order_item_order_id) as order_count,
+  SUM(oi.order_item_quantity) as total_quantity_sold,
+  ROUND(SUM(oi.order_item_price * oi.order_item_quantity)::numeric, 2) as total_revenue,
+  ROUND(AVG(r.review_rating)::numeric, 2) as avg_rating
+FROM products p
+JOIN product_tags pt ON p.product_id = pt.product_tag_product_id
+JOIN tags t ON pt.product_tag_tag_id = t.tag_id
+LEFT JOIN order_items oi ON p.product_id = oi.order_item_product_id
+LEFT JOIN reviews r ON p.product_id = r.review_product_id
+WHERE t.tag_name IN ('New', 'Trending')
+GROUP BY p.product_id, p.product_name, p.product_price
+ORDER BY total_revenue DESC NULLS LAST
+LIMIT 15;",hard
+"Show me products that are wishlisted, have discounts, and positive reviews (>7/10)","SELECT 
+  p.product_id,
+  p.product_name,
+  p.product_price as original_price,
+  d.discount_percentage,
+  ROUND((p.product_price * (1 - d.discount_percentage / 100.0))::numeric, 2) as discounted_price,
+  COUNT(DISTINCT wi.wishlist_item_wishlist_id) as wishlist_count,
+  COUNT(r.review_id) as review_count,
+  ROUND(AVG(r.review_rating)::numeric, 2) as avg_rating,
+  d.discount_name,
+  d.discount_end_date
+FROM products p
+JOIN wishlist_items wi ON p.product_id = wi.wishlist_item_product_id
+JOIN product_discounts pd ON p.product_id = pd.product_discount_product_id
+JOIN discounts d ON pd.product_discount_discount_id = d.discount_id
+JOIN reviews r ON p.product_id = r.review_product_id
+WHERE d.discount_start_date <= NOW()
+  AND d.discount_end_date >= NOW()
+GROUP BY p.product_id, p.product_name, p.product_price, d.discount_percentage, d.discount_name, d.discount_end_date
+HAVING AVG(r.review_rating) > 7
+ORDER BY wishlist_count DESC, avg_rating DESC;",hard
+"What are the top 3 products by revenue in each category, showing their rank and the percentage of category total revenue?
+
+","WITH product_revenue AS (
+  SELECT 
     p.product_id,
     p.product_name,
-    COUNT(DISTINCT pd.product_discount_discount_id) AS discount_count
-FROM products AS p
-JOIN product_discounts AS pd
-    ON p.product_id = pd.product_discount_product_id
-GROUP BY p.product_id, p.product_name
-HAVING COUNT(DISTINCT pd.product_discount_discount_id) > 1
-ORDER BY discount_count DESC, p.product_name;"
-Show which coupons were used by multiple users through their orders.,"SELECT 
-    c.coupon_id,
-    c.coupon_code,
-    COUNT(DISTINCT o.order_user_id) AS user_count
-FROM coupons AS c
-JOIN order_coupons AS oc
-    ON c.coupon_id = oc.order_coupon_coupon_id
-JOIN orders AS o
-    ON oc.order_coupon_order_id = o.order_id
-GROUP BY c.coupon_id, c.coupon_code
-HAVING COUNT(DISTINCT o.order_user_id) > 1
-ORDER BY user_count DESC, c.coupon_code;"
-Find the total number of coupons used per month.,"SELECT 
-    DATE_TRUNC('month', o.order_date) AS month,
-    COUNT(DISTINCT oc.order_coupon_coupon_id) AS total_coupons_used
-FROM orders AS o
-JOIN order_coupons AS oc
-    ON o.order_id = oc.order_coupon_order_id
-GROUP BY DATE_TRUNC('month', o.order_date)
-ORDER BY month;"
-Find all users who have placed more than 3 orders.,"SELECT 
+    cp.category_product_category_id as category_id,
+    c.category_name,
+    SUM(oi.order_item_price * oi.order_item_quantity) as total_revenue,
+    COUNT(DISTINCT oi.order_item_order_id) as order_count
+  FROM products p
+  JOIN order_items oi ON p.product_id = oi.order_item_product_id
+  JOIN category_products cp ON p.product_id = cp.category_product_product_id
+  JOIN categories c ON cp.category_product_category_id = c.category_id
+  JOIN orders o ON oi.order_item_order_id = o.order_id
+  WHERE o.order_status = 'completed'
+  GROUP BY p.product_id, p.product_name, cp.category_product_category_id, c.category_name
+),
+category_totals AS (
+  SELECT 
+    category_id,
+    SUM(total_revenue) as category_total_revenue
+  FROM product_revenue
+  GROUP BY category_id
+),
+ranked_products AS (
+  SELECT 
+    pr.*,
+    ct.category_total_revenue,
+    ROW_NUMBER() OVER (PARTITION BY pr.category_id ORDER BY pr.total_revenue DESC) as rank,
+    ROUND((pr.total_revenue / ct.category_total_revenue) * 100, 2) as pct_of_category_revenue
+  FROM product_revenue pr
+  JOIN category_totals ct ON pr.category_id = ct.category_id
+)
+SELECT 
+  category_name,
+  product_name,
+  rank,
+  ROUND(total_revenue, 2) as total_revenue,
+  pct_of_category_revenue || '%' as pct_of_category,
+  order_count
+FROM ranked_products
+WHERE rank <= 3
+ORDER BY category_name, rank;",hard
+Find products where the average rating is higher than the median rating of all products in their same price quartile.,"WITH product_stats AS (
+  SELECT 
+    p.product_id,
+    p.product_name,
+    p.product_price,
+    AVG(r.review_rating) as avg_rating,
+    COUNT(r.review_id) as review_count,
+    NTILE(4) OVER (ORDER BY p.product_price) as price_quartile
+  FROM products p
+  LEFT JOIN reviews r ON p.product_id = r.review_product_id
+  GROUP BY p.product_id, p.product_name, p.product_price
+),
+quartile_medians AS (
+  SELECT 
+    price_quartile,
+    AVG(avg_rating) as median_rating,
+    MIN(product_price) as quartile_min_price,
+    MAX(product_price) as quartile_max_price
+  FROM product_stats
+  WHERE avg_rating IS NOT NULL
+  GROUP BY price_quartile
+)
+SELECT 
+  ps.product_name,
+  ROUND(ps.product_price, 2) as price,
+  ps.price_quartile,
+  ROUND(ps.avg_rating, 2) as avg_rating,
+  ps.review_count,
+  ROUND(qm.median_rating, 2) as quartile_median_rating,
+  ROUND(ps.avg_rating - qm.median_rating, 2) as rating_above_median
+FROM product_stats ps
+JOIN quartile_medians qm ON ps.price_quartile = qm.price_quartile
+WHERE ps.avg_rating > qm.median_rating
+ORDER BY ps.price_quartile, rating_above_median DESC;",hard
+"Calculate the percentile rank of each product based on total orders, partitioned by their primary category.","WITH product_orders AS (
+  SELECT 
+    p.product_id,
+    p.product_name,
+    cp.category_product_category_id as category_id,
+    c.category_name,
+    COUNT(DISTINCT oi.order_item_order_id) as total_orders
+  FROM products p
+  JOIN order_items oi ON p.product_id = oi.order_item_product_id
+  JOIN category_products cp ON p.product_id = cp.category_product_product_id
+  JOIN categories c ON cp.category_product_category_id = c.category_id
+  GROUP BY p.product_id, p.product_name, cp.category_product_category_id, c.category_name
+)
+SELECT 
+  category_name,
+  product_name,
+  total_orders,
+  ROUND(PERCENT_RANK() OVER (PARTITION BY category_id ORDER BY total_orders) * 100, 2) as percentile_rank,
+  RANK() OVER (PARTITION BY category_id ORDER BY total_orders DESC) as category_rank
+FROM product_orders
+ORDER BY category_name, total_orders DESC;",hard
+"Which products have never been ordered but are in at least 5 shopping carts, and have an average wishlist count higher than the median?","WITH product_metrics AS (
+  SELECT 
+    p.product_id,
+    p.product_name,
+    p.product_price,
+    COUNT(DISTINCT sci.shopping_cart_item_id) as cart_count,
+    COUNT(DISTINCT wi.wishlist_item_id) as wishlist_count,
+    COUNT(DISTINCT oi.order_item_id) as order_count
+  FROM products p
+  LEFT JOIN shopping_cart_items sci ON p.product_id = sci.shopping_cart_item_product_id
+  LEFT JOIN wishlist_items wi ON p.product_id = wi.wishlist_item_product_id
+  LEFT JOIN order_items oi ON p.product_id = oi.order_item_product_id
+  GROUP BY p.product_id, p.product_name, p.product_price
+),
+median_wishlist AS (
+  SELECT AVG(wishlist_count) as median_wishlist_count
+  FROM (
+    SELECT wishlist_count, 
+           ROW_NUMBER() OVER (ORDER BY wishlist_count) as rn,
+           COUNT(*) OVER () as cnt
+    FROM product_metrics
+    WHERE wishlist_count > 0
+  )
+  WHERE rn IN ((cnt + 1) / 2, (cnt + 2) / 2)
+)
+SELECT 
+  pm.product_name,
+  ROUND(pm.product_price, 2) as price,
+  pm.cart_count,
+  pm.wishlist_count,
+  ROUND(mw.median_wishlist_count, 1) as median_wishlist
+FROM product_metrics pm
+CROSS JOIN median_wishlist mw
+WHERE pm.order_count = 0 
+  AND pm.cart_count >= 5
+  AND pm.wishlist_count > mw.median_wishlist_count
+ORDER BY pm.cart_count DESC, pm.wishlist_count DESC;",hard
+"Find products that appear in more carts than they've been purchased, with a ratio greater than 2:1.","WITH product_metrics AS (
+  SELECT 
+    p.product_id,
+    p.product_name,
+    p.product_price,
+    COUNT(DISTINCT sci.shopping_cart_item_id) as times_in_cart,
+    COUNT(DISTINCT oi.order_item_order_id) as times_purchased
+  FROM products p
+  LEFT JOIN shopping_cart_items sci ON p.product_id = sci.shopping_cart_item_product_id
+  LEFT JOIN order_items oi ON p.product_id = oi.order_item_product_id
+  GROUP BY p.product_id, p.product_name, p.product_price
+)
+SELECT 
+  product_name,
+  ROUND(product_price, 2) as price,
+  times_in_cart,
+  times_purchased,
+  ROUND(CAST(times_in_cart AS REAL) / NULLIF(times_purchased, 0), 2) as cart_to_purchase_ratio,
+  times_in_cart - times_purchased as abandonment_count
+FROM product_metrics
+WHERE times_purchased > 0 
+  AND CAST(times_in_cart AS REAL) / times_purchased >= 2.0
+ORDER BY cart_to_purchase_ratio DESC
+LIMIT 30;",hard
+List all vendors,SELECT * FROM vendors;,easy
+Count total number of vendors,"SELECT COUNT(*) as total_vendors FROM vendors;
+",easy
+Find a specific vendor by name,"SELECT * FROM vendors WHERE vendor_name = 'ABC Electronics';",easy
+Find vendors with names starting with 'A',"SELECT * FROM vendors WHERE vendor_name LIKE 'A%';
+",easy
+Find vendors with names containing 'Tech',"SELECT vendor_id, vendor_name FROM vendors WHERE vendor_name LIKE '%Tech%';
+",easy
+Get the first 10 vendors,SELECT * FROM vendors LIMIT 10;,easy
+Get vendors created in a specific year,"SELECT * FROM vendors 
+WHERE strftime('%Y', vendor_created_at) = '2023'
+ORDER BY vendor_created_at;",easy
+"Find vendors updated recently (last 30 days)
+","SELECT vendor_id, vendor_name, vendor_updated_at 
+FROM vendors 
+WHERE vendor_updated_at >= datetime('now', '-30 days')
+ORDER BY vendor_updated_at DESC;",easy
+Count products per vendor,"SELECT 
+  v.vendor_name,
+  COUNT(pv.product_vendor_product_id) as product_count
+FROM vendors v
+LEFT JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY product_count DESC;",easy
+Find vendors with no products,"SELECT v.vendor_id, v.vendor_name
+FROM vendors v
+LEFT JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+WHERE pv.product_vendor_id IS NULL;",easy
+Find vendors with more than 5 products,"SELECT 
+  v.vendor_name,
+  COUNT(pv.product_vendor_product_id) as product_count
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+GROUP BY v.vendor_id, v.vendor_name
+HAVING COUNT(pv.product_vendor_product_id) > 5
+ORDER BY product_count DESC;",easy
+Get vendors who supply products in Electronics category,"SELECT DISTINCT v.vendor_name
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+JOIN category_products cp ON p.product_id = cp.category_product_product_id
+JOIN categories c ON cp.category_product_category_id = c.category_id
+WHERE c.category_name = 'Electronics'
+ORDER BY v.vendor_name;",easy
+List vendors and their total product value (sum of prices),"SELECT 
+  v.vendor_name,
+  COUNT(p.product_id) as product_count,
+  ROUND(SUM(p.product_price), 2) as total_product_value
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY total_product_value DESC;",medium
+Find vendors and their average product price,"SELECT 
+  v.vendor_name,
+  COUNT(p.product_id) as product_count,
+  ROUND(AVG(p.product_price), 2) as avg_product_price
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY avg_product_price DESC;",medium
+Get vendors with their cheapest product,"SELECT 
+  v.vendor_name,
+  MIN(p.product_price) as cheapest_product_price
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY cheapest_product_price ASC;",medium
+Get vendors with their most expensive product,"SELECT 
+  v.vendor_name,
+  MAX(p.product_price) as most_expensive_product
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY most_expensive_product DESC;",medium
+Count how many orders each vendor's products have received,"SELECT 
+  v.vendor_name,
+  COUNT(DISTINCT oi.order_item_order_id) as total_orders
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+JOIN order_items oi ON p.product_id = oi.order_item_product_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY total_orders DESC;",medium
+Calculate total revenue by vendor,"SELECT 
+  v.vendor_name,
+  COUNT(DISTINCT oi.order_item_order_id) as order_count,
+  ROUND(SUM(oi.order_item_price * oi.order_item_quantity), 2) as total_revenue
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+JOIN order_items oi ON p.product_id = oi.order_item_product_id
+JOIN orders o ON oi.order_item_order_id = o.order_id
+WHERE o.order_status = 'completed'
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY total_revenue DESC;",medium
+Find vendors whose products have been reviewed,"SELECT DISTINCT
+  v.vendor_name,
+  COUNT(DISTINCT r.review_id) as review_count
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+JOIN reviews r ON p.product_id = r.review_product_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY review_count DESC;",medium
+Get vendors with average product rating,"SELECT 
+  v.vendor_name,
+  COUNT(DISTINCT p.product_id) as product_count,
+  COUNT(r.review_id) as total_reviews,
+  ROUND(AVG(r.review_rating), 2) as avg_vendor_rating
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+LEFT JOIN reviews r ON p.product_id = r.review_product_id
+GROUP BY v.vendor_id, v.vendor_name
+HAVING COUNT(r.review_id) > 0
+ORDER BY avg_vendor_rating DESC;",medium
+Find vendors whose products are currently on sale,"SELECT DISTINCT
+  v.vendor_name,
+  COUNT(DISTINCT p.product_id) as products_on_sale
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+JOIN product_discounts pd ON p.product_id = pd.product_discount_product_id
+JOIN discounts d ON pd.product_discount_discount_id = d.discount_id
+WHERE d.discount_active = 1
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY products_on_sale DESC;",medium
+Find vendors whose products are in shopping carts,"SELECT 
+  v.vendor_name,
+  COUNT(DISTINCT sci.shopping_cart_item_id) as times_in_cart
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+JOIN shopping_cart_items sci ON p.product_id = sci.shopping_cart_item_product_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY times_in_cart DESC;",medium
+Find vendors whose products are on wishlists,"SELECT 
+  v.vendor_name,
+  COUNT(DISTINCT wi.wishlist_item_id) as wishlist_count
+FROM vendors v
+JOIN product_vendors pv ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p ON pv.product_vendor_product_id = p.product_id
+JOIN wishlist_items wi ON p.product_id = wi.wishlist_item_product_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY wishlist_count DESC;",medium
+Identify vendors whose set of items shows the greatest variation in pricing.,"SELECT v.vendor_id,
+       v.vendor_name,
+       VARIANCE(p.product_price) AS price_variance
+FROM vendors v
+JOIN product_vendors pv
+     ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p
+     ON pv.product_vendor_product_id = p.product_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY price_variance DESC;",hard
+Find vendors who only provide items that were created before the vendor itself was added to the system.,"SELECT v.vendor_id, v.vendor_name
+FROM vendors v
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM product_vendors pv
+    JOIN products p
+         ON p.product_id = pv.product_vendor_product_id
+    WHERE pv.product_vendor_vendor_id = v.vendor_id
+      AND p.product_created_at >= v.vendor_created_at
+);",hard
+Return the top five vendors with the highest combined total value of all items they provide.,"SELECT v.vendor_id,
+       v.vendor_name,
+       SUM(p.product_price) AS total_value
+FROM vendors v
+JOIN product_vendors pv
+     ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p
+     ON pv.product_vendor_product_id = p.product_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY total_value DESC
+LIMIT 5;",hard
+Retrieve vendors whose average item price is at least twice the global average item price.,"WITH global_avg AS (
+    SELECT AVG(product_price) AS avg_price FROM products
+),
+vendor_avg AS (
+    SELECT v.vendor_id,
+           v.vendor_name,
+           AVG(p.product_price) AS vendor_avg_price
+    FROM vendors v
+    JOIN product_vendors pv
+         ON v.vendor_id = pv.product_vendor_vendor_id
+    JOIN products p
+         ON pv.product_vendor_product_id = p.product_id
+    GROUP BY v.vendor_id
+)
+SELECT va.*
+FROM vendor_avg va CROSS JOIN global_avg g
+WHERE va.vendor_avg_price >= g.avg_price * 2;",hard
+"For each vendor, calculate the ratio between their most expensive item and their least expensive item.","SELECT v.vendor_id,
+       v.vendor_name,
+       MAX(p.product_price) / MIN(p.product_price) AS price_ratio
+FROM vendors v
+JOIN product_vendors pv
+     ON v.vendor_id = pv.product_vendor_vendor_id
+JOIN products p
+     ON pv.product_vendor_product_id = p.product_id
+GROUP BY v.vendor_id, v.vendor_name;
+",hard
+Find vendors who provide both older items (more than five years old) and newer items (less than thirty days old).,"SELECT DISTINCT v.vendor_id, v.vendor_name
+FROM vendors v
+JOIN product_vendors pv1
+     ON v.vendor_id = pv1.product_vendor_vendor_id
+JOIN products p1
+     ON p1.product_id = pv1.product_vendor_product_id
+JOIN product_vendors pv2
+     ON v.vendor_id = pv2.product_vendor_vendor_id
+JOIN products p2
+     ON p2.product_id = pv2.product_vendor_product_id
+WHERE p1.product_created_at < NOW() - INTERVAL '5 years'
+  AND p2.product_created_at > NOW() - INTERVAL '30 days';
+",hard
+How many orders has each user placed so far?,"SELECT 
     u.user_id,
     u.user_name,
     COUNT(o.order_id) AS total_orders
-FROM users AS u
-JOIN orders AS o
-    ON u.user_id = o.order_user_id
+FROM users u
+LEFT JOIN orders o ON o.order_user_id = u.user_id
 GROUP BY u.user_id, u.user_name
-HAVING COUNT(o.order_id) > 3
-ORDER BY total_orders DESC;"
-"For each user, show the total number of products they have purchased.","SELECT 
+ORDER BY total_orders DESC;
+SELECT 
     u.user_id,
     u.user_name,
-    SUM(oi.order_item_quantity) AS total_products_purchased
-FROM users AS u
-JOIN orders AS o
-    ON u.user_id = o.order_user_id
-JOIN order_items AS oi
-    ON o.order_id = oi.order_item_order_id
+    COUNT(o.order_id) AS total_orders
+FROM users u
+LEFT JOIN orders o ON o.order_user_id = u.user_id
 GROUP BY u.user_id, u.user_name
-ORDER BY total_products_purchased DESC;"
-Find orders that include products from more than one vendor.,"SELECT 
+ORDER BY total_orders DESC;",easy
+"Which orders contain more than one item, and how many items do they include?","SELECT 
     o.order_id,
-    COUNT(DISTINCT p.product_vendor_id) AS vendor_count
-FROM orders AS o
-JOIN order_items AS oi
-    ON o.order_id = oi.order_item_order_id
-JOIN products AS p
-    ON oi.order_item_product_id = p.product_id
-GROUP BY o.order_id
-HAVING COUNT(DISTINCT p.product_vendor_id) > 1
-ORDER BY vendor_count DESC, o.order_id;"
-How much did each user spend per month?,"SELECT 
+    COUNT(oi.order_item_id) AS item_count
+FROM orders o
+JOIN order_items oi ON oi.order_item_order_id = o.order_id
+GROUP BY o.order_id;",easy
+What is the total revenue generated per day based on the order totals?,"SELECT 
+    DATE(order_created_at) AS order_date,
+    SUM(order_total) AS total_revenue
+FROM orders
+GROUP BY DATE(order_created_at)
+ORDER BY order_date;
+",easy
+Which users have spent the most money on completed orders? Show the top five.,"SELECT 
     u.user_id,
     u.user_name,
-    DATE_TRUNC('month', o.order_created_at) AS month,
     SUM(o.order_total) AS total_spent
-FROM users AS u
-JOIN orders AS o
-    ON u.user_id = o.order_user_id
-JOIN transactions AS t
-    ON o.order_id = t.transaction_order_id
-JOIN payments AS p
-    ON t.transaction_payment_id = p.payment_id
-WHERE 
-    o.order_status = 'success' 
-    AND t.transaction_status = 'success'
-    AND p.payment_status = 'paid'
-GROUP BY u.user_id, u.user_name, DATE_TRUNC('month', o.order_created_at)
-ORDER BY u.user_id, month;
-"
-Which products appear in more than 10 different orders?,"SELECT 
-    p.product_id,
-    p.product_name,
-    COUNT(DISTINCT oi.order_item_order_id) AS order_count
-FROM products AS p
-JOIN order_items AS oi
-    ON p.product_id = oi.order_item_product_id
-GROUP BY p.product_id, p.product_name
-HAVING COUNT(DISTINCT oi.order_item_order_id) > 10
-ORDER BY order_count DESC, p.product_name;"
-Find all orders where someone applied a coupon and later returned items.,"SELECT DISTINCT
+FROM users u
+JOIN orders o ON o.order_user_id = u.user_id
+WHERE o.order_status = 'completed'
+GROUP BY u.user_id, u.user_name
+ORDER BY total_spent DESC
+LIMIT 5;",medium
+"For each order, how many coupons were applied?","SELECT 
+    o.order_id,
+    COUNT(oc.order_coupon_id) AS coupons_used
+FROM orders o
+LEFT JOIN order_coupons oc ON oc.order_coupon_order_id = o.order_id
+GROUP BY o.order_id;
+",medium
+Which orders include products that currently have an active discount?,"SELECT DISTINCT o.order_id
+FROM orders o
+JOIN order_items oi ON oi.order_item_order_id = o.order_id
+JOIN product_discounts pd ON pd.product_discount_product_id = oi.order_item_product_id
+JOIN discounts d ON d.discount_id = pd.product_discount_discount_id
+WHERE NOW() BETWEEN d.discount_start_date AND d.discount_end_date;",medium
+What is the average order total grouped by order status?,"SELECT 
+    order_status,
+    AVG(order_total) AS avg_order_total
+FROM orders
+GROUP BY order_status;
+",medium
+Show all orders that don’t have a shipment record yet.,"SELECT o.*
+FROM orders o
+LEFT JOIN shipments s ON s.shipment_order_id = o.order_id
+WHERE s.shipment_id IS NULL;
+",medium
+Find orders where the sum of order items doesn’t match the recorded order_total.,"SELECT 
     o.order_id,
     o.order_total,
-    o.order_status,
-    o.order_created_at
-FROM orders AS o
-JOIN order_coupons AS oc
-    ON o.order_id = oc.order_coupon_order_id
-JOIN returns AS r
-    ON o.order_id = r.return_order_id
-ORDER BY o.order_created_at DESC;
-"
-How much revenue was generated by each product category?,"SELECT 
-    c.category_id,
-    c.category_name,
-    SUM(oi.order_item_quantity * oi.order_item_price) AS total_revenue
-FROM categories AS c
-JOIN product_categories AS pc
-    ON c.category_id = pc.category_id
-JOIN products AS p
-    ON pc.product_id = p.product_id
-JOIN order_items AS oi
-    ON p.product_id = oi.order_item_product_id
-JOIN orders AS o
-    ON oi.order_item_order_id = o.order_id
-JOIN transactions AS t
-    ON o.order_id = t.transaction_order_id
-JOIN payments AS pmt
-    ON t.transaction_payment_id = pmt.payment_id
-WHERE 
-    o.order_status = 'success'
-    AND t.transaction_status = 'success'
-    AND pmt.payment_status = 'paid'
-GROUP BY c.category_id, c.category_name
-ORDER BY total_revenue DESC;"
-Find users who made purchases in consecutive months.,"WITH user_months AS (
-    SELECT DISTINCT
-        u.user_id,
-        u.user_name,
-        DATE_TRUNC('month', o.order_created_at) AS month
-    FROM users u
-    JOIN orders o ON u.user_id = o.order_user_id
-    JOIN transactions t ON o.order_id = t.transaction_order_id
-    JOIN payments pmt ON t.transaction_payment_id = pmt.payment_id
-    WHERE 
-        o.order_status = 'success'
-        AND t.transaction_status = 'success'
-        AND pmt.payment_status = 'paid'
-),
-ranked AS (
-    SELECT
-        user_id,
-        user_name,
-        month,
-        ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY month) AS rn
-    FROM user_months
-),
-grouped AS (
-    SELECT
-        user_id,
-        user_name,
-        month,
-        (month - (rn || ' month')::interval) AS grp
-    FROM ranked
-)
-SELECT DISTINCT
-    user_id,
-    user_name
-FROM grouped
-GROUP BY user_id, user_name, grp
-HAVING COUNT(*) > 1
-ORDER BY user_name;
-"
-Show the top 5 products with the highest total sales revenue.,"SELECT 
-    p.product_id,
-    p.product_name,
-    SUM(oi.order_item_quantity * oi.order_item_price) AS total_revenue
-FROM products AS p
-JOIN order_items AS oi
-    ON p.product_id = oi.order_item_product_id
-JOIN orders AS o
-    ON oi.order_item_order_id = o.order_id
-JOIN transactions AS t
-    ON o.order_id = t.transaction_order_id
-JOIN payments AS pmt
-    ON t.transaction_payment_id = pmt.payment_id
-WHERE 
-    o.order_status = 'success'
-    AND t.transaction_status = 'success'
-    AND pmt.payment_status = 'paid'
-GROUP BY p.product_id, p.product_name
-ORDER BY total_revenue DESC
-LIMIT 5;"
-"For each order, show total quantity and total price of items.","SELECT 
-    o.order_id,
-    SUM(oi.order_item_quantity) AS total_quantity,
-    SUM(oi.order_item_quantity * oi.order_item_price) AS total_price
-FROM orders AS o
-JOIN order_items AS oi 
-    ON o.order_id = oi.order_item_order_id
-JOIN transactions AS t 
-    ON o.order_id = t.transaction_order_id
-JOIN payments AS pmt
-    ON t.transaction_payment_id = pmt.payment_id
-GROUP BY o.order_id
-ORDER BY o.order_id;
-"
-"Find the total amount of payments by status (e.g., successful, pending).","SELECT 
-    payment_status,
-    SUM(payment_amount) AS total_amount
-FROM payments
-GROUP BY payment_status
-ORDER BY total_amount DESC;"
-Which orders have multiple transactions linked?,"SELECT 
-    p.order_id,
-    COUNT(*) AS transaction_count
-FROM payments p
-GROUP BY p.order_id
-HAVING COUNT(*) > 1;"
-List all failed transactions along with the corresponding user email.,"SELECT 
-    p.payment_id,
-    p.order_id,
-    p.amount,
-    p.payment_status,
-    u.email AS user_email
-FROM payments p
-JOIN orders o ON p.order_id = o.order_id
-JOIN users u ON o.user_id = u.user_id
-WHERE p.payment_status = 'failed';"
-Find the total payment amount processed by each payment method.,"SELECT 
-    payment_method,
-    SUM(amount) AS total_amount_processed
-FROM payments
-GROUP BY payment_method
-ORDER BY total_amount_processed DESC;
-"
-Identify orders where payment and transaction statuses don’t match.,"SELECT 
-    o.order_id,
-    p.payment_id,
-    p.payment_status,
-    t.transaction_id,
-    t.transaction_status
+    SUM(oi.order_item_price * oi.order_item_quantity) AS computed_total
 FROM orders o
-JOIN payments p ON o.order_id = p.order_id
-JOIN transactions t ON o.order_id = t.order_id
-WHERE p.payment_status <> t.transaction_status;"
-Which payment methods are most successful (based on completed status)?,"SELECT 
-    p.payment_method,
-    COUNT(*) AS successful_payments
-FROM payments p
-WHERE p.payment_status = 'paid'
-GROUP BY p.payment_method
-ORDER BY successful_payments DESC;
-"
-Find the average time delay between order creation and payment completion.,"SELECT 
-    AVG(p.payment_completed_at - o.order_created_at) AS avg_delay
+JOIN order_items oi ON oi.order_item_order_id = o.order_id
+GROUP BY o.order_id, o.order_total
+HAVING SUM(oi.order_item_price * oi.order_item_quantity) <> o.order_total;
+",medium
+"Which orders include at least one product from a specific category (e.g., “Electronics”)?","SELECT DISTINCT o.order_id
 FROM orders o
-JOIN payments p ON o.order_id = p.order_id
-WHERE p.payment_status = 'completed';"
-Show all transactions related to orders that used a coupon.,"SELECT 
-    t.transaction_id,
-    t.order_id,
-    t.transaction_amount,
-    t.transaction_status,
-    t.transaction_created_at,
-    c.coupon_code
-FROM transactions t
-JOIN orders o ON t.order_id = o.order_id
-JOIN coupons c ON o.coupon_id = c.coupon_id;"
-Identify users whose payments have failed more than once.,"SELECT 
+JOIN order_items oi ON oi.order_item_order_id = o.order_id
+JOIN category_products cp ON cp.category_product_product_id = oi.order_item_product_id
+JOIN categories c ON c.category_id = cp.category_product_category_id
+WHERE c.category_name = 'Electronics';
+",medium
+How many returned orders does each user have?,"SELECT 
     u.user_id,
     u.user_name,
-    u.user_email,
-    COUNT(p.payment_id) AS failed_payment_count
+    COUNT(r.return_id) AS returns_count
 FROM users u
-JOIN orders o ON u.user_id = o.user_id
-JOIN payments p ON o.order_id = p.order_id
-WHERE p.payment_status = 'failed'
-GROUP BY u.user_id, u.user_name, u.user_email
-HAVING COUNT(p.payment_id) > 1;"
-Find total transaction counts per month for the past year.,"SELECT 
-    DATE_TRUNC('month', t.transaction_created_at) AS month,
-    COUNT(*) AS total_transactions
-FROM transactions t
-WHERE t.transaction_created_at >= (CURRENT_DATE - INTERVAL '1 year')
-GROUP BY month
-ORDER BY month;"
-List all orders that have a shipment but no return.,"SELECT 
+LEFT JOIN returns r ON r.return_user_id = u.user_id
+GROUP BY u.user_id, u.user_name;
+",medium
+Which orders used a coupon with a discount above 20%?,"SELECT DISTINCT o.order_id
+FROM orders o
+JOIN order_coupons oc ON oc.order_coupon_order_id = o.order_id
+JOIN coupons c ON c.coupon_id = oc.order_coupon_coupon_id
+WHERE c.coupon_discount_percentage > 20;
+",medium
+Show all orders along with their shipment status (if any).,"SELECT 
     o.order_id,
-    o.user_id,
-    o.order_created_at,
-    s.shipment_id,
     s.shipment_status
 FROM orders o
-JOIN shipments s ON o.order_id = s.order_id
-LEFT JOIN returns r ON o.order_id = r.order_id
-WHERE r.return_id IS NULL;"
-Find all returns created within 7 days after shipment.,"SELECT 
-    r.return_id,
-    r.return_order_id,
-    r.return_user_id,
-    r.return_created_at,
-    s.shipment_id,
-    s.shipment_created_at,
-    (r.return_created_at - s.shipment_created_at) AS delay_interval
-FROM returns r
-JOIN shipments s ON r.return_order_id = s.shipment_order_id
-WHERE 
-    r.return_created_at >= s.shipment_created_at
-    AND r.return_created_at <= s.shipment_created_at + INTERVAL '7 days'
-ORDER BY r.return_created_at;
-"
-Calculate the percentage of returned orders by month.,"SELECT 
-    TO_CHAR(o.order_created_at, 'YYYY-MM') AS month,
-    COUNT(DISTINCT o.order_id) AS total_orders,
-    COUNT(DISTINCT r.return_id) AS returned_orders,
-    ROUND(
-        COUNT(DISTINCT r.return_id)::decimal / COUNT(DISTINCT o.order_id) * 100, 
-        2
-    ) AS return_rate_percent
+LEFT JOIN shipments s ON s.shipment_order_id = o.order_id;",medium
+List orders that generated a transaction but don’t have a payment record.,"SELECT DISTINCT o.order_id
 FROM orders o
-LEFT JOIN returns r ON o.order_id = r.return_order_id
-GROUP BY TO_CHAR(o.order_created_at, 'YYYY-MM')
-ORDER BY month;"
-Identify users who have returned more than two different products.,"SELECT 
+JOIN transactions t ON t.transaction_order_id = o.order_id
+LEFT JOIN payments p ON p.payment_id = t.transaction_payment_id
+WHERE p.payment_id IS NULL;
+",medium
+How many orders does each user have in each status?,"SELECT 
     u.user_id,
     u.user_name,
-    COUNT(DISTINCT r.return_order_id) AS different_products_returned
+    o.order_status,
+    COUNT(*) AS total_orders
 FROM users u
-JOIN returns r ON u.user_id = r.return_user_id
-GROUP BY u.user_id, u.user_name
-HAVING COUNT(DISTINCT r.return_order_id) > 2
-ORDER BY different_products_returned DESC;"
-Show the average number of days between order creation and shipment creation.,"SELECT 
-    ROUND(AVG(EXTRACT(DAY FROM (s.shipment_created_at - o.order_created_at))), 2) 
-        AS avg_days_between_order_and_shipment
+JOIN orders o ON o.order_user_id = u.user_id
+GROUP BY u.user_id, u.user_name, o.order_status;
+",medium
+What is the most expensive order item across all orders?,"SELECT *
+FROM order_items
+ORDER BY order_item_price DESC
+LIMIT 1;",medium
+Which users have an average order value greater than 150?,"SELECT *
+FROM order_items
+ORDER BY order_item_price DESC
+LIMIT 1;
+",medium
+Show orders that contain products with low review ratings (below 3).,"SELECT DISTINCT o.order_id
 FROM orders o
-JOIN shipments s ON o.order_id = s.shipment_order_id;"
-Find users who have both active shipments and pending returns.,"SELECT DISTINCT
-    u.user_id,
-    u.user_name,
-    u.user_email
-FROM users u
-JOIN orders o ON u.user_id = o.order_user_id
-JOIN shipments s ON o.order_id = s.shipment_order_id
-JOIN returns r ON o.order_id = r.return_order_id
-WHERE 
-    s.shipment_status = 'active'
-    AND r.return_status = 'pending';"
-"For each city, show how many shipments have been delivered.","SELECT 
-    a.address_city,
-    COUNT(s.shipment_id) AS delivered_shipments
-FROM shipments s
-JOIN addresses a 
-    ON s.shipment_address_id = a.address_id
-WHERE s.shipment_status = 'delivered'
-GROUP BY a.address_city
-ORDER BY delivered_shipments DESC;"
-Identify the top 5 cities with the highest number of returns.,"SELECT 
-    a.address_city,
-    COUNT(r.return_id) AS total_returns
-FROM returns r
-JOIN shipments s 
-    ON r.return_order_id = s.shipment_order_id
-JOIN addresses a 
-    ON s.shipment_address_id = a.address_id
-GROUP BY a.address_city
-ORDER BY total_returns DESC
-LIMIT 5;"
-Find all orders where shipment and payment were created on the same day.,"SELECT 
+JOIN order_items oi ON oi.order_item_order_id = o.order_id
+JOIN reviews r ON r.review_product_id = oi.order_item_product_id
+WHERE r.review_rating < 3;",medium
+How many units of each product were sold across all orders?,"SELECT 
+    p.product_id,
+    p.product_name,
+    SUM(oi.order_item_quantity) AS units_sold
+FROM products p
+JOIN order_items oi ON oi.order_item_product_id = p.product_id
+GROUP BY p.product_id, p.product_name;
+",medium
+Which orders contain products supplied by more than three vendors?,"SELECT 
     o.order_id,
-    o.order_user_id,
-    p.payment_created_at::date AS payment_date,
-    s.shipment_created_at::date AS shipment_date
+    COUNT(DISTINCT pv.product_vendor_vendor_id) AS vendor_count
 FROM orders o
-JOIN payments p 
-    ON o.order_id = p.payment_order_id
-JOIN shipments s 
-    ON o.order_id = s.shipment_order_id
-WHERE p.payment_created_at::date = s.shipment_created_at::date;"
-Find the top 3 vendors whose products generate the highest total order revenue.,"SELECT 
-    v.vendor_id,
-    v.vendor_name,
-    SUM(oi.order_item_quantity * oi.order_item_price) AS total_revenue
-FROM vendors v
-JOIN product_vendors pv 
-    ON v.vendor_id = pv.product_vendor_vendor_id
-JOIN products p 
-    ON pv.product_vendor_product_id = p.product_id
-JOIN order_items oi 
-    ON oi.order_item_product_id = p.product_id
-GROUP BY v.vendor_id, v.vendor_name
-ORDER BY total_revenue DESC
-LIMIT 3;"
-"For each product, calculate its total sales, average discount applied, and total number of reviews.","SELECT 
+JOIN order_items oi ON oi.order_item_order_id = o.order_id
+JOIN product_vendors pv ON pv.product_vendor_product_id = oi.order_item_product_id
+GROUP BY o.order_id
+HAVING COUNT(DISTINCT pv.product_vendor_vendor_id) > 3;
+",medium
+Which orders from the last 30 days have not been returned?,"SELECT o.*
+FROM orders o
+LEFT JOIN returns r ON r.return_order_id = o.order_id
+WHERE o.order_created_at >= NOW() - INTERVAL '30 days'
+  AND r.return_id IS NULL;",medium
+Show orders where the payment status and transaction status don’t match.,"SELECT DISTINCT o.order_id
+FROM orders o
+JOIN transactions t ON t.transaction_order_id = o.order_id
+JOIN payments p ON p.payment_id = t.transaction_payment_id
+WHERE p.payment_status <> t.transaction_status;
+",medium
+"For each user, show the date of their first and most recent order.","SELECT 
+    u.user_id,
+    u.user_name,
+    MIN(o.order_created_at) AS first_order,
+    MAX(o.order_created_at) AS last_order
+FROM users u
+LEFT JOIN orders o ON o.order_user_id = u.user_id
+GROUP BY u.user_id, u.user_name;
+",medium
+"Find each customer’s most recent purchase, even if they have multiple on the same day.","SELECT *
+FROM (
+  SELECT
+    o.*,
+    ROW_NUMBER() OVER (PARTITION BY o.order_user_id ORDER BY o.order_created_at DESC, o.order_id DESC) AS rn
+  FROM orders o
+) t
+WHERE rn = 1;",hard
+"Show every customer’s purchases arranged by how expensive they were, and identify their most expensive ones.","SELECT
+  o.*,
+  RANK() OVER (PARTITION BY o.order_user_id ORDER BY o.order_total DESC) AS order_rank_for_user
+FROM orders o
+ORDER BY o.order_user_id, order_rank_for_user;
+",hard
+"Identify the three highest-value purchases ever recorded, without relying on any “limit” behavior.","SELECT *
+FROM (
+  SELECT
+    o.*,
+    ROW_NUMBER() OVER (ORDER BY o.order_total DESC, o.order_created_at DESC) AS rn_global
+  FROM orders o
+) t
+WHERE rn_global <= 3
+ORDER BY rn_global;
+",hard
+"Calculate how total revenue has grown over time, adding each day’s revenue on top of prior days.","SELECT
+  o.order_id,
+  o.order_created_at,
+  o.order_total,
+  SUM(o.order_total) OVER (ORDER BY o.order_created_at, o.order_id
+                           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_revenue
+FROM orders o
+ORDER BY o.order_created_at;",hard
+"For every item within a purchase, determine what share of the overall purchase amount that item represents.","SELECT
+  oi.order_item_id,
+  oi.order_item_order_id,
+  oi.order_item_product_id,
+  oi.order_item_quantity,
+  oi.order_item_price,
+  o.order_total,
+  CASE
+    WHEN o.order_total = 0 THEN 0
+    ELSE ((oi.order_item_price * oi.order_item_quantity) / o.order_total) * 100
+  END AS percent_of_order
+FROM order_items oi
+JOIN orders o ON oi.order_item_order_id = o.order_id
+ORDER BY oi.order_item_order_id;
+",hard
+"For each customer, find the first purchase they made in each calendar month.","SELECT *
+FROM (
+  SELECT
+    o.*,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_user_id, DATE_TRUNC('month', o.order_created_at)
+      ORDER BY o.order_created_at, o.order_id
+    ) AS rn_month_first
+  FROM orders o
+) t
+WHERE rn_month_first = 1
+ORDER BY t.order_user_id, DATE_TRUNC('month', t.order_created_at);
+",hard
+Identify customers whose latest purchase is more expensive than their usual spending pattern.,"SELECT DISTINCT u.user_id, u.user_name
+FROM users u
+WHERE (
+  SELECT o_latest.order_total
+  FROM orders o_latest
+  WHERE o_latest.order_user_id = u.user_id
+  ORDER BY o_latest.order_created_at DESC, o_latest.order_id DESC
+  LIMIT 1
+) > (
+  SELECT AVG(o2.order_total)::numeric
+  FROM orders o2
+  WHERE o2.order_user_id = u.user_id
+);",hard
+"Find which products generate the most total revenue, and rank them accordingly.","WITH product_revenue AS (
+  SELECT
     p.product_id,
     p.product_name,
-    SUM(oi.order_item_quantity * oi.order_item_price) AS total_sales,
-    AVG(d.discount_percentage) AS avg_discount_applied,
-    COUNT(DISTINCT r.review_id) AS total_reviews
-FROM products p
-LEFT JOIN order_items oi 
-    ON oi.order_item_product_id = p.product_id
-LEFT JOIN product_discounts pd 
-    ON pd.product_discount_product_id = p.product_id
-LEFT JOIN discounts d 
-    ON d.discount_id = pd.product_discount_discount_id
-LEFT JOIN reviews r 
-    ON r.review_product_id = p.product_id
-GROUP BY p.product_id, p.product_name
-ORDER BY total_sales DESC;"
-"Identify products that have never been added to any cart, wishlist, or order.","SELECT 
-    p.product_id,
-    p.product_name
-FROM products p
-LEFT JOIN cart_items ci 
-    ON ci.cart_item_product_id = p.product_id
-LEFT JOIN wishlist_items wi 
-    ON wi.wishlist_item_product_id = p.product_id
-LEFT JOIN order_items oi 
-    ON oi.order_item_product_id = p.product_id
-WHERE ci.cart_item_id IS NULL
-  AND wi.wishlist_item_id IS NULL
-  AND oi.order_item_id IS NULL;
-"
-"For each category, list the most popular product (based on total quantity sold).","WITH product_sales AS (
-    SELECT 
-        cp.category_product_category_id AS category_id,
-        c.category_name,
-        p.product_id,
-        p.product_name,
-        SUM(oi.order_item_quantity) AS total_quantity_sold
-    FROM category_products cp
-    JOIN categories c 
-        ON c.category_id = cp.category_product_category_id
-    JOIN products p 
-        ON p.product_id = cp.category_product_product_id
-    JOIN order_items oi 
-        ON oi.order_item_product_id = p.product_id
-    GROUP BY cp.category_product_category_id, c.category_name, p.product_id, p.product_name
-),
-ranked AS (
-    SELECT 
-        *,
-        RANK() OVER (PARTITION BY category_id ORDER BY total_quantity_sold DESC) AS rnk
-    FROM product_sales
+    SUM(oi.order_item_price * oi.order_item_quantity) AS revenue
+  FROM products p
+  JOIN order_items oi ON oi.order_item_product_id = p.product_id
+  GROUP BY p.product_id, p.product_name
 )
-SELECT 
-    category_id,
-    category_name,
-    product_id,
-    product_name,
-    total_quantity_sold
-FROM ranked
-WHERE rnk = 1;"
-Show vendors whose average product rating is higher than the overall store average.,"WITH product_avg AS (
-    SELECT 
-        p.product_vendor_id AS vendor_id,
-        AVG(r.review_rating) AS avg_rating
-    FROM products p
-    JOIN reviews r 
-        ON r.review_product_id = p.product_id
-    GROUP BY p.product_vendor_id
-),
-store_avg AS (
-    SELECT 
-        AVG(r.review_rating) AS overall_avg_rating
-    FROM reviews r
+SELECT *
+FROM (
+  SELECT
+    pr.*,
+    RANK() OVER (ORDER BY pr.revenue DESC) AS revenue_rank
+  FROM product_revenue pr
+) t
+WHERE revenue_rank <= 5
+ORDER BY revenue_rank;
+",hard
+Determine which purchases exceed the typical purchase size for that same day.,"SELECT
+  o.*,
+  AVG(o.order_total) OVER (PARTITION BY DATE(o.order_created_at)) AS avg_total_for_day
+FROM orders o
+WHERE o.order_total > AVG(o.order_total) OVER (PARTITION BY DATE(o.order_created_at))
+ORDER BY DATE(o.order_created_at), o.order_total DESC;
+",hard
+Calculate revenue trends by producing a rolling total covering the previous week for each date.,"WITH daily AS (
+  SELECT
+    DATE(order_created_at) AS day,
+    SUM(order_total) AS day_revenue
+  FROM orders
+  GROUP BY DATE(order_created_at)
 )
-SELECT 
-    v.vendor_id,
-    v.vendor_name,
-    pa.avg_rating
-FROM product_avg pa
-JOIN vendors v 
-    ON v.vendor_id = pa.vendor_id,
-     store_avg sa
-WHERE pa.avg_rating > sa.overall_avg_rating
-ORDER BY pa.avg_rating DESC;"
-Identify categories with no active products (where all related products are discontinued or not in any order).,"SELECT 
+SELECT
+  d.day,
+  d.day_revenue,
+  SUM(d.day_revenue) OVER (
+    ORDER BY d.day
+    RANGE BETWEEN INTERVAL '6 days' PRECEDING AND CURRENT ROW
+  ) AS revenue_7_day_moving
+FROM daily d
+ORDER BY d.day;",hard
+Measure how long customers typically wait between one purchase and the next.,"SELECT
+  o.order_user_id,
+  o.order_id,
+  o.order_created_at,
+  LAG(o.order_created_at) OVER (PARTITION BY o.order_user_id ORDER BY o.order_created_at) AS prev_order_at,
+  (o.order_created_at - LAG(o.order_created_at) OVER (PARTITION BY o.order_user_id ORDER BY o.order_created_at)) AS gap_interval,
+  EXTRACT(EPOCH FROM (o.order_created_at - LAG(o.order_created_at) OVER (PARTITION BY o.order_user_id ORDER BY o.order_created_at)))/86400.0 AS gap_days
+FROM orders o
+ORDER BY o.order_user_id, o.order_created_at;
+",hard
+Find purchases that represent unusually high spending for that specific customer.,"SELECT *
+FROM (
+  SELECT
+    o.*,
+    AVG(o.order_total) OVER (PARTITION BY o.order_user_id) AS avg_for_user
+  FROM orders o
+) t
+WHERE t.order_total > 1.5 * t.avg_for_user
+ORDER BY t.order_user_id, t.order_total DESC;
+",hard
+Determine which purchases are the single most expensive ones made by each customer.,"SELECT o.*
+FROM orders o
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM orders o2
+  WHERE o2.order_user_id = o.order_user_id
+    AND o2.order_total > o.order_total
+);
+",hard
+Look at each product category and identify the two purchases where that category contributed the most revenue.,"WITH category_order_revenue AS (
+  SELECT
     c.category_id,
-    c.category_name
-FROM categories c
-LEFT JOIN category_products cp 
-    ON cp.category_product_category_id = c.category_id
-LEFT JOIN products p 
-    ON p.product_id = cp.category_product_product_id
-LEFT JOIN order_items oi 
-    ON oi.order_item_product_id = p.product_id
-GROUP BY c.category_id, c.category_name
-HAVING COUNT(oi.order_item_id) = 0;"
-"For each vendor, calculate total revenue, average product price, and total units sold.","SELECT 
-    v.vendor_id,
-    v.vendor_name,
-    SUM(oi.order_item_quantity * oi.order_item_price) AS total_revenue,
-    AVG(p.product_price) AS avg_product_price,
-    SUM(oi.order_item_quantity) AS total_units_sold
-FROM vendors v
-JOIN product_vendors pv 
-    ON pv.product_vendor_vendor_id = v.vendor_id
-JOIN products p 
-    ON p.product_id = pv.product_vendor_product_id
-JOIN order_items oi 
-    ON oi.order_item_product_id = p.product_id
-GROUP BY v.vendor_id, v.vendor_name
-ORDER BY total_revenue DESC;"
-List products that appear in both a wishlist and an order for the same user.,"SELECT DISTINCT 
+    c.category_name,
+    o.order_id,
+    SUM(oi.order_item_price * oi.order_item_quantity) AS category_rev_in_order
+  FROM categories c
+  JOIN category_products cp ON cp.category_product_category_id = c.category_id
+  JOIN order_items oi ON oi.order_item_product_id = cp.category_product_product_id
+  JOIN orders o ON o.order_id = oi.order_item_order_id
+  GROUP BY c.category_id, c.category_name, o.order_id
+)
+SELECT *
+FROM (
+  SELECT
+    cor.*,
+    ROW_NUMBER() OVER (PARTITION BY cor.category_id ORDER BY cor.category_rev_in_order DESC) AS rn_in_category
+  FROM category_order_revenue cor
+) t
+WHERE rn_in_category <= 2
+ORDER BY t.category_id, rn_in_category;",hard
+Identify customers who belong to the top tenth percentile in total spending.,"WITH user_totals AS (
+  SELECT
+    u.user_id,
+    u.user_name,
+    COALESCE(SUM(o.order_total), 0) AS total_spend
+  FROM users u
+  LEFT JOIN orders o ON o.order_user_id = u.user_id
+  GROUP BY u.user_id, u.user_name
+),
+threshold AS (
+  SELECT percentile_disc(0.90) WITHIN GROUP (ORDER BY total_spend) AS cutoff
+  FROM user_totals
+)
+SELECT ut.*
+FROM user_totals ut, threshold t
+WHERE ut.total_spend >= t.cutoff
+ORDER BY ut.total_spend DESC;",hard
+Find days where a customer’s recorded purchase cost differs significantly from calculating it based on individual line items.,"WITH computed AS (
+  SELECT
+    o.order_id,
+    o.order_created_at,
+    o.order_total,
+    SUM(oi.order_item_price * oi.order_item_quantity) AS computed_total,
+    ABS(o.order_total - SUM(oi.order_item_price * oi.order_item_quantity)) AS diff
+  FROM orders o
+  LEFT JOIN order_items oi ON oi.order_item_order_id = o.order_id
+  GROUP BY o.order_id, o.order_created_at, o.order_total
+)
+SELECT *
+FROM (
+  SELECT
+    c.*,
+    ROW_NUMBER() OVER (PARTITION BY DATE(c.order_created_at) ORDER BY c.diff DESC) AS rn_day
+  FROM computed c
+) t
+WHERE t.rn_day = 1
+ORDER BY DATE(t.order_created_at);
+",hard
+Identify purchases with unusually generous discounts compared to other discounts given in the same week.,"SELECT DISTINCT o.order_id, o.order_created_at, c.coupon_discount_percentage
+FROM orders o
+JOIN order_coupons oc ON oc.order_coupon_order_id = o.order_id
+JOIN coupons c ON c.coupon_id = oc.order_coupon_coupon_id
+WHERE c.coupon_discount_percentage >
+  (SELECT AVG(c2.coupon_discount_percentage)
+   FROM order_coupons oc2
+   JOIN orders o2 ON o2.order_id = oc2.order_coupon_order_id
+   JOIN coupons c2 ON c2.coupon_id = oc2.order_coupon_coupon_id
+   WHERE DATE_TRUNC('week', o2.order_created_at) = DATE_TRUNC('week', o.order_created_at)
+  );
+",hard
+Find customers with unusually high average spending compared to the rest of the platform.,"WITH avg_per_user AS (
+  SELECT
+    u.user_id,
+    u.user_name,
+    AVG(o.order_total) AS avg_order_value
+  FROM users u
+  JOIN orders o ON o.order_user_id = u.user_id
+  GROUP BY u.user_id, u.user_name
+),
+cut AS (
+  SELECT percentile_disc(0.75) WITHIN GROUP (ORDER BY avg_order_value) AS p75
+  FROM avg_per_user
+)
+SELECT a.*
+FROM avg_per_user a, cut c
+WHERE a.avg_order_value > c.p75
+ORDER BY a.avg_order_value DESC;
+",hard
+Track how many units of each product have been sold cumulatively over time.,"SELECT
+  t.product_id,
+  p.product_name,
+  t.order_date,
+  t.qty_on_date,
+  SUM(t.qty_on_date) OVER (PARTITION BY t.product_id ORDER BY t.order_date
+                           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulative_units_sold
+FROM (
+  SELECT
+    oi.order_item_product_id AS product_id,
+    DATE(o.order_created_at) AS order_date,
+    SUM(oi.order_item_quantity) AS qty_on_date
+  FROM order_items oi
+  JOIN orders o ON o.order_id = oi.order_item_order_id
+  GROUP BY oi.order_item_product_id, DATE(o.order_created_at)
+) t
+JOIN products p ON p.product_id = t.product_id
+ORDER BY t.product_id, t.order_date;
+",hard
+Find purchases with item counts that fall into the highest 10% across all purchases.,"WITH items_per_order AS (
+  SELECT
+    o.order_id,
+    COUNT(oi.order_item_id) AS item_count
+  FROM orders o
+  LEFT JOIN order_items oi ON oi.order_item_order_id = o.order_id
+  GROUP BY o.order_id
+),
+cut AS (
+  SELECT percentile_disc(0.90) WITHIN GROUP (ORDER BY item_count) AS p90
+  FROM items_per_order
+)
+SELECT ipo.*
+FROM items_per_order ipo, cut c
+WHERE ipo.item_count > c.p90
+ORDER BY ipo.item_count DESC;
+",hard
+Show me all available discounts that are currently active.,"SELECT *
+FROM discounts
+WHERE NOW() BETWEEN discount_start_date AND discount_end_date;",easy
+List all discounts that start within a specific date range.,"SELECT *
+FROM discounts
+WHERE discount_start_date BETWEEN '2025-01-01' AND '2025-12-31'
+ORDER BY discount_start_date;",easy
+Find the highest discount percentage offered on the platform.,"SELECT MAX(discount_percentage) AS highest_discount
+FROM discounts;",easy
+Show all products that have any discount attached to them.,"SELECT DISTINCT p.*
+FROM products p
+JOIN product_discounts pd ON pd.product_discount_product_id = p.product_id
+JOIN discounts d ON d.discount_id = pd.product_discount_discount_id;",easy
+How many discounts are associated with each product?,"SELECT 
     p.product_id,
     p.product_name,
-    w.wishlist_user_id AS user_id
+    COUNT(pd.product_discount_discount_id) AS total_discounts
 FROM products p
-JOIN wishlist_items wi 
-    ON wi.wishlist_item_product_id = p.product_id
-JOIN wishlists w 
-    ON w.wishlist_id = wi.wishlist_item_wishlist_id
-JOIN order_items oi 
-    ON oi.order_item_product_id = p.product_id
-JOIN orders o 
-    ON o.order_id = oi.order_item_order_id
-WHERE o.order_user_id = w.wishlist_user_id;"
-Find the correlation between product price and average review rating (if stored numerically).,"SELECT 
-    CORR(p.product_price, avg_r.avg_rating) AS price_rating_correlation
-FROM products p
-JOIN (
+LEFT JOIN product_discounts pd ON pd.product_discount_product_id = p.product_id
+GROUP BY p.product_id, p.product_name
+ORDER BY total_discounts DESC;",easy
+Show all discounts that are expiring soon.,"SELECT *
+FROM discounts
+WHERE discount_end_date <= NOW() + INTERVAL '7 days'
+ORDER BY discount_end_date;",easy
+"List the newest discounts added to the system, starting from the most recent.","SELECT *
+FROM discounts
+ORDER BY discount_start_date DESC
+LIMIT 20;",easy
+"Which discounts are linked to products that have generated the most sales, and how often do those discounts appear in customer purchases?","WITH product_sales AS (
     SELECT 
-        review_product_id AS product_id,
-        AVG(review_rating) AS avg_rating
-    FROM reviews
-    GROUP BY review_product_id
-) AS avg_r
-ON avg_r.product_id = p.product_id;"
- ,"SELECT 
-    d1.discount_id AS discount_1_id,
-    d1.discount_name AS discount_1_name,
-    d2.discount_id AS discount_2_id,
-    d2.discount_name AS discount_2_name,
+        oi.order_item_product_id AS product_id,
+        SUM(oi.order_item_quantity) AS total_sold
+    FROM order_items oi
+    GROUP BY oi.order_item_product_id
+),
+top_products AS (
+    SELECT *
+    FROM product_sales
+    ORDER BY total_sold DESC
+    LIMIT 10
+)
+SELECT 
+    d.discount_id,
+    d.discount_name,
+    tp.total_sold,
+    COUNT(*) AS discount_usage_in_orders
+FROM discounts d
+JOIN product_discounts pd ON pd.product_discount_discount_id = d.discount_id
+JOIN top_products tp ON tp.product_id = pd.product_discount_product_id
+JOIN order_items oi ON oi.order_item_product_id = tp.product_id
+GROUP BY d.discount_id, d.discount_name, tp.total_sold;",medium
+"For each product, show the total number of times its associated discount was actually used in real orders.","SELECT 
+    p.product_id,
+    p.product_name,
+    d.discount_id,
+    d.discount_name,
+    COUNT(oi.order_item_id) AS times_used
+FROM products p
+JOIN product_discounts pd ON pd.product_discount_product_id = p.product_id
+JOIN discounts d ON d.discount_id = pd.product_discount_discount_id
+LEFT JOIN order_items oi ON oi.order_item_product_id = p.product_id
+GROUP BY p.product_id, p.product_name, d.discount_id, d.discount_name;",medium
+Find discounts that were active during periods of high sales volume and compare them to periods when no discounts were active.,"WITH sales_by_day AS (
+    SELECT 
+        DATE(o.order_created_at) AS day,
+        SUM(o.order_total) AS revenue
+    FROM orders o
+    GROUP BY DATE(o.order_created_at)
+),
+discount_days AS (
+    SELECT DISTINCT DATE(d.discount_start_date) AS day
+    FROM discounts d
+    UNION
+    SELECT DISTINCT DATE(d.discount_end_date)
+    FROM discounts d
+)
+SELECT 
+    s.day,
+    s.revenue,
+    CASE WHEN s.day IN (SELECT day FROM discount_days)
+         THEN 'discount_active'
+         ELSE 'no_discount'
+    END AS period_type
+FROM sales_by_day s
+ORDER BY s.day;",medium
+Show all discounts that overlap with each other in time and list the products affected by those overlaps.,"SELECT 
+    d1.discount_id AS discount_a,
+    d2.discount_id AS discount_b,
     p.product_id,
     p.product_name
 FROM discounts d1
-JOIN product_discounts pd1 
-    ON pd1.product_discount_discount_id = d1.discount_id
-JOIN discounts d2
-    ON d1.discount_id < d2.discount_id 
-JOIN product_discounts pd2 
-    ON pd2.product_discount_discount_id = d2.discount_id
-   AND pd1.product_discount_product_id = pd2.product_discount_product_id
-JOIN products p 
-    ON p.product_id = pd1.product_discount_product_id
-WHERE d1.discount_start_date <= d2.discount_end_date
-  AND d2.discount_start_date <= d1.discount_end_date;
-"
-Find the top 5 products that received the largest total discount amount from coupons and discounts combined.,"WITH product_discounts_total AS (
+JOIN discounts d2 
+    ON d1.discount_id <> d2.discount_id
+   AND d1.discount_start_date <= d2.discount_end_date
+   AND d2.discount_start_date <= d1.discount_end_date
+JOIN product_discounts pd1 ON pd1.product_discount_discount_id = d1.discount_id
+JOIN product_discounts pd2 ON pd2.product_discount_discount_id = d2.discount_id
+JOIN products p ON p.product_id = pd1.product_discount_product_id
+               AND p.product_id = pd2.product_discount_product_id;",medium
+"For each product, calculate how much of its total revenue came from sales made while a discount was active.","WITH discounted_sales AS (
     SELECT 
-        pd.product_discount_product_id AS product_id,
-        SUM((d.discount_percentage / 100.0) * p.product_price) AS total_discount_amount
-    FROM product_discounts pd
-    JOIN discounts d 
-        ON d.discount_id = pd.product_discount_discount_id
-    JOIN products p 
-        ON p.product_id = pd.product_discount_product_id
-    GROUP BY pd.product_discount_product_id
+        oi.order_item_product_id AS product_id,
+        SUM(oi.order_item_price * oi.order_item_quantity) AS discounted_revenue
+    FROM order_items oi
+    JOIN orders o ON o.order_id = oi.order_item_order_id
+    JOIN product_discounts pd ON pd.product_discount_product_id = oi.order_item_product_id
+    JOIN discounts d ON d.discount_id = pd.product_discount_discount_id
+    WHERE o.order_created_at BETWEEN d.discount_start_date AND d.discount_end_date
+    GROUP BY oi.order_item_product_id
 ),
-product_coupons_total AS (
+total_sales AS (
     SELECT 
-        pc.product_coupon_product_id AS product_id,
-        SUM((c.coupon_discount_percentage / 100.0) * p.product_price) AS total_coupon_amount
-    FROM product_coupons pc
-    JOIN coupons c 
-        ON c.coupon_id = pc.product_coupon_coupon_id
-    JOIN products p 
-        ON p.product_id = pc.product_coupon_product_id
-    GROUP BY pc.product_coupon_product_id
-),
-combined AS (
-    SELECT 
-        p.product_id,
-        p.product_name,
-        COALESCE(d.total_discount_amount, 0) + COALESCE(c.total_coupon_amount, 0) AS total_discount_value
-    FROM products p
-    LEFT JOIN product_discounts_total d 
-        ON d.product_id = p.product_id
-    LEFT JOIN product_coupons_total c 
-        ON c.product_id = p.product_id
+        oi.order_item_product_id AS product_id,
+        SUM(oi.order_item_price * oi.order_item_quantity) AS total_revenue
+    FROM order_items oi
+    GROUP BY oi.order_item_product_id
 )
 SELECT 
-    product_id,
-    product_name,
-    total_discount_value
-FROM combined
-ORDER BY total_discount_value DESC
-LIMIT 5;"
-Calculate the total discount value given per month (discount% × sales value).,"SELECT 
-    DATE_TRUNC('month', o.order_created_at) AS month,
-    SUM((d.discount_percentage / 100.0) * (oi.order_item_quantity * oi.order_item_price)) AS total_discount_value
-FROM orders o
-JOIN order_items oi 
-    ON oi.order_item_order_id = o.order_id
-JOIN product_discounts pd 
-    ON pd.product_discount_product_id = oi.order_item_product_id
-JOIN discounts d 
-    ON d.discount_id = pd.product_discount_discount_id
-GROUP BY DATE_TRUNC('month', o.order_created_at)
-ORDER BY month;
-"
-Find users who have redeemed coupons more than once in different orders.,"SELECT 
-    u.user_id,
-    u.user_name,
-    u.user_email,
-    COUNT(DISTINCT oc.order_coupon_order_id) AS coupon_orders_count
-FROM users u
-JOIN orders o 
-    ON o.order_user_id = u.user_id
-JOIN order_coupons oc 
-    ON oc.order_coupon_order_id = o.order_id
-GROUP BY u.user_id, u.user_name, u.user_email
-HAVING COUNT(DISTINCT oc.order_coupon_order_id) > 1
-ORDER BY coupon_orders_count DESC;"
-Determine which discounts never got applied to any product.,"SELECT 
-    d.discount_id,
-    d.discount_name,
-    d.discount_description,
-    d.discount_percentage,
-    d.discount_start_date,
-    d.discount_end_date
-FROM discounts d
-LEFT JOIN product_discounts pd 
-    ON d.discount_id = pd.product_discount_discount_id
-WHERE pd.product_discount_id IS NULL;"
-Find coupons that were active during the time of at least one order but were never used.,"SELECT 
-    c.coupon_id,
-    c.coupon_code,
-    c.coupon_description,
-    c.coupon_discount,
-    c.coupon_start_date,
-    c.coupon_end_date
-FROM coupons c
-WHERE EXISTS (
-    SELECT 1
-    FROM orders o
-    WHERE o.order_created_at BETWEEN c.coupon_start_date AND c.coupon_end_date
-)
-AND NOT EXISTS (
-    SELECT 1
-    FROM orders o2
-    WHERE o2.order_coupon_id = c.coupon_id
-);"
-"For each user, calculate how much total money they saved using coupons.","SELECT 
-    u.user_id,
-    u.user_name,
-    u.user_email,
-    SUM(
-        (o.order_total_price * c.coupon_discount / 100.0)
-    ) AS total_money_saved
-FROM users u
-JOIN orders o ON o.order_user_id = u.user_id
-JOIN coupons c ON o.order_coupon_id = c.coupon_id
-GROUP BY u.user_id, u.user_name, u.user_email
-ORDER BY total_money_saved DESC;"
-Compare the number of discounted vs non-discounted products sold each month.,"SELECT
-    DATE_TRUNC('month', o.order_created_at) AS month,
-    SUM(CASE WHEN d.discount_id IS NOT NULL THEN oi.quantity ELSE 0 END) AS discounted_products_sold,
-    SUM(CASE WHEN d.discount_id IS NULL THEN oi.quantity ELSE 0 END) AS non_discounted_products_sold
-FROM order_items oi
-JOIN orders o ON oi.order_id = o.order_id
-LEFT JOIN product_discounts pd ON oi.product_id = pd.product_id
-LEFT JOIN discounts d ON pd.discount_id = d.discount_id
-GROUP BY DATE_TRUNC('month', o.order_created_at)
-ORDER BY month;"
-"For each product, find the average discount percentage weighted by number of sales.","SELECT
     p.product_id,
     p.product_name,
+    COALESCE(ds.discounted_revenue, 0) AS discounted_revenue,
+    ts.total_revenue,
     ROUND(
-        SUM(d.discount_percentage * oi.quantity) / NULLIF(SUM(oi.quantity), 0),
+        COALESCE(ds.discounted_revenue, 0) / NULLIF(ts.total_revenue, 0) * 100,
         2
-    ) AS weighted_avg_discount
+    ) AS discount_percentage_of_revenue
 FROM products p
-JOIN order_items oi ON p.product_id = oi.product_id
-JOIN product_discounts pd ON p.product_id = pd.product_id
-JOIN discounts d ON pd.discount_id = d.discount_id
-GROUP BY p.product_id, p.product_name
-ORDER BY weighted_avg_discount DESC;"
-Find the month-over-month growth rate in total sales for the last 12 months.,"WITH monthly_sales AS (
-    SELECT
-        DATE_TRUNC('month', o.order_created_at) AS month,
-        SUM(o.order_total_price) AS total_sales
-    FROM orders o
-    WHERE o.order_created_at >= NOW() - INTERVAL '12 months'
-    GROUP BY DATE_TRUNC('month', o.order_created_at)
-)
-SELECT
-    TO_CHAR(ms.month, 'YYYY-MM') AS month,
-    ms.total_sales,
-    ROUND(
-        (ms.total_sales - LAG(ms.total_sales) OVER (ORDER BY ms.month)) 
-        / NULLIF(LAG(ms.total_sales) OVER (ORDER BY ms.month), 0) * 100,
-        2
-    ) AS mom_growth_rate
-FROM monthly_sales ms
-ORDER BY ms.month;"
-"Identify the top 10 users by total spending, along with their most purchased product.","WITH user_spending AS (
-    SELECT
-        u.user_id,
-        u.user_name,
-        SUM(o.order_total_price) AS total_spent
-    FROM users u
-    JOIN orders o ON o.order_user_id = u.user_id
-    GROUP BY u.user_id, u.user_name
-),
-user_top_product AS (
-    SELECT
-        o.order_user_id AS user_id,
-        oi.product_id,
-        p.product_name,
-        SUM(oi.quantity) AS total_quantity,
-        ROW_NUMBER() OVER (PARTITION BY o.order_user_id ORDER BY SUM(oi.quantity) DESC) AS rn
-    FROM orders o
-    JOIN order_items oi ON oi.order_id = o.order_id
-    JOIN products p ON p.product_id = oi.product_id
-    GROUP BY o.order_user_id, oi.product_id, p.product_name
-)
-SELECT
-    us.user_id,
-    us.user_name,
-    us.total_spent,
-    utp.product_name AS most_purchased_product,
-    utp.total_quantity AS times_purchased
-FROM user_spending us
-JOIN user_top_product utp 
-    ON us.user_id = utp.user_id AND utp.rn = 1
-ORDER BY us.total_spent DESC
-LIMIT 10;
-"
-Find all orders that contain products from more than three different vendors.,"SELECT
-    o.order_id,
-    COUNT(DISTINCT p.vendor_id) AS vendor_count
-FROM orders o
-JOIN order_items oi ON o.order_id = oi.order_id
-JOIN products p ON oi.product_id = p.product_id
-GROUP BY o.order_id
-HAVING COUNT(DISTINCT p.vendor_id) > 3
-ORDER BY vendor_count DESC;
-"
-Determine the most commonly co-purchased product pairs (frequently bought together).,"SELECT
-    LEAST(oi1.product_id, oi2.product_id) AS product_id_1,
-    GREATEST(oi1.product_id, oi2.product_id) AS product_id_2,
-    COUNT(*) AS times_bought_together
-FROM order_items oi1
-JOIN order_items oi2 
-    ON oi1.order_id = oi2.order_id 
-   AND oi1.product_id < oi2.product_id
-GROUP BY product_id_1, product_id_2
-ORDER BY times_bought_together DESC
-LIMIT 10;"
-Find users who ordered at least one product from every category.,"SELECT 
-    u.user_id,
-    u.user_name,
-    u.user_email
-FROM users u
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM categories c
-    WHERE NOT EXISTS (
-        SELECT 1
-        FROM orders o
-        JOIN order_items oi ON o.order_id = oi.order_id
-        JOIN products p ON oi.product_id = p.product_id
-        JOIN product_categories pc ON p.product_id = pc.product_id
-        WHERE o.order_user_id = u.user_id
-          AND pc.category_id = c.category_id
-    )
-)
-ORDER BY u.user_name;
-"
-"For each user, calculate the reorder rate (same product purchased multiple times).","WITH user_product_counts AS (
-    SELECT
-        o.order_user_id AS user_id,
-        oi.product_id,
-        COUNT(DISTINCT o.order_id) AS order_count
-    FROM orders o
-    JOIN order_items oi ON o.order_id = oi.order_id
-    GROUP BY o.order_user_id, oi.product_id
-),
-user_reorder_stats AS (
-    SELECT
-        user_id,
-        COUNT(*) FILTER (WHERE order_count > 1) AS repeated_products,
-        COUNT(*) AS total_products
-    FROM user_product_counts
-    GROUP BY user_id
-)
-SELECT
-    u.user_id,
-    u.user_name,
-    ROUND(
-        (repeated_products::DECIMAL / NULLIF(total_products, 0)) * 100, 
-        2
-    ) AS reorder_rate_percent,
-    repeated_products,
-    total_products
-FROM users u
-JOIN user_reorder_stats urs ON u.user_id = urs.user_id
-ORDER BY reorder_rate_percent DESC;
-"
-"Find orders that were partially fulfilled (some items shipped, others pending).","SELECT 
-    o.order_id,
-    o.order_created_at,
-    COUNT(DISTINCT CASE WHEN s.shipment_status = 'shipped' THEN oi.order_item_id END) AS shipped_items,
-    COUNT(DISTINCT CASE WHEN s.shipment_status != 'shipped' OR s.shipment_status IS NULL THEN oi.order_item_id END) AS pending_items
-FROM orders o
-JOIN order_items oi ON o.order_id = oi.order_id
-LEFT JOIN shipments s ON oi.order_item_id = s.order_item_id
-GROUP BY o.order_id, o.order_created_at
-HAVING 
-    COUNT(DISTINCT CASE WHEN s.shipment_status = 'shipped' THEN oi.order_item_id END) > 0
-    AND COUNT(DISTINCT CASE WHEN s.shipment_status != 'shipped' OR s.shipment_status IS NULL THEN oi.order_item_id END) > 0
-ORDER BY o.order_created_at DESC;
-"
-Calculate the total failed transaction percentage per payment method.,"SELECT
-    pm.payment_method_name,
-    COUNT(t.transaction_id) FILTER (WHERE t.transaction_status = 'failed') AS failed_count,
-    COUNT(t.transaction_id) AS total_count,
-    ROUND(
-        (COUNT(t.transaction_id) FILTER (WHERE t.transaction_status = 'failed')::DECIMAL 
-        / NULLIF(COUNT(t.transaction_id), 0)) * 100,
-        2
-    ) AS failed_percentage
-FROM transactions t
-JOIN payments p ON t.payment_id = p.payment_id
-JOIN payment_methods pm ON p.payment_method_id = pm.payment_method_id
-GROUP BY pm.payment_method_name
-ORDER BY failed_percentage DESC;"
-Identify users who made payments using more than one payment method.,"SELECT 
-    u.user_id,
-    u.user_name,
-    u.user_email,
-    COUNT(DISTINCT p.payment_method) AS payment_method_count
-FROM users u
-JOIN orders o 
-    ON u.user_id = o.order_user_id
-JOIN payments p 
-    ON o.order_id = p.payment_order_id
-GROUP BY u.user_id, u.user_name, u.user_email
-HAVING COUNT(DISTINCT p.payment_method) > 1
-ORDER BY payment_method_count DESC;"
-"Find the average number of transactions per order, grouped by month.","SELECT
-    DATE_TRUNC('month', o.order_created_at) AS month,
-    ROUND(AVG(t.transaction_count), 2) AS avg_transactions_per_order
-FROM (
+LEFT JOIN discounted_sales ds ON ds.product_id = p.product_id
+JOIN total_sales ts ON ts.product_id = p.product_id;",medium
+Identify discounts that apply to many products but were rarely used in orders.,"WITH product_counts AS (
     SELECT 
-        o.order_id,
-        COUNT(t.transaction_id) AS transaction_count
-    FROM orders o
-    LEFT JOIN transactions t 
-        ON o.order_id = t.transaction_order_id
-    GROUP BY o.order_id
-) AS t
+        d.discount_id,
+        COUNT(pd.product_discount_product_id) AS product_count
+    FROM discounts d
+    LEFT JOIN product_discounts pd ON pd.product_discount_discount_id = d.discount_id
+    GROUP BY d.discount_id
+),
+usage_counts AS (
+    SELECT 
+        d.discount_id,
+        COUNT(oi.order_item_id) AS usage_count
+    FROM discounts d
+    LEFT JOIN product_discounts pd ON pd.product_discount_discount_id = d.discount_id
+    LEFT JOIN order_items oi ON oi.order_item_product_id = pd.product_discount_product_id
+    GROUP BY d.discount_id
+)
+SELECT 
+    d.discount_id,
+    d.discount_name,
+    pc.product_count,
+    uc.usage_count
+FROM discounts d
+JOIN product_counts pc ON pc.discount_id = d.discount_id
+JOIN usage_counts uc ON uc.discount_id = d.discount_id
+WHERE pc.product_count > 3
+ORDER BY uc.usage_count ASC;",medium
+"For every discount, determine which customer used it first and which customer used it last.","WITH discount_usage AS (
+    SELECT
+        d.discount_id,
+        o.order_user_id AS user_id,
+        o.order_created_at AS used_at,
+        ROW_NUMBER() OVER (PARTITION BY d.discount_id ORDER BY o.order_created_at ASC) AS first_use,
+        ROW_NUMBER() OVER (PARTITION BY d.discount_id ORDER BY o.order_created_at DESC) AS last_use
+    FROM discounts d
+    JOIN product_discounts pd ON pd.product_discount_discount_id = d.discount_id
+    JOIN order_items oi ON oi.order_item_product_id = pd.product_discount_product_id
+    JOIN orders o ON o.order_id = oi.order_item_order_id
+)
+SELECT
+    discount_id,
+    MAX(CASE WHEN first_use = 1 THEN user_id END) AS first_user,
+    MAX(CASE WHEN last_use = 1 THEN user_id END) AS last_user
+FROM discount_usage
+GROUP BY discount_id;",hard
+"Identify discounts that were active during times when product sales were rising, and compare them to discounts active during declining sales periods.","WITH sales AS (
+    SELECT
+        DATE(order_created_at) AS day,
+        SUM(order_total) AS daily_sales,
+        LAG(SUM(order_total)) OVER (ORDER BY DATE(order_created_at)) AS prev_sales
+    FROM orders
+    GROUP BY DATE(order_created_at)
+),
+discount_days AS (
+    SELECT 
+        d.discount_id,
+        generate_series(d.discount_start_date::date, d.discount_end_date::date, '1 day') AS active_day
+    FROM discounts d
+)
+SELECT 
+    dd.discount_id,
+    COUNT(*) FILTER (WHERE s.daily_sales > s.prev_sales) AS rising_days,
+    COUNT(*) FILTER (WHERE s.daily_sales < s.prev_sales) AS falling_days
+FROM discount_days dd
+LEFT JOIN sales s ON s.day = dd.active_day
+GROUP BY dd.discount_id;",hard
+"Find discounts that contributed the most to a product’s total revenue, based on how customers purchased during the discount period.","WITH discounted_sales AS (
+    SELECT
+        d.discount_id,
+        oi.order_item_product_id AS product_id,
+        SUM(oi.order_item_price * oi.order_item_quantity) AS revenue
+    FROM discounts d
+    JOIN product_discounts pd ON pd.product_discount_discount_id = d.discount_id
+    JOIN order_items oi ON oi.order_item_product_id = pd.product_discount_product_id
+    JOIN orders o ON o.order_id = oi.order_item_order_id
+    WHERE o.order_created_at BETWEEN d.discount_start_date AND d.discount_end_date
+    GROUP BY d.discount_id, oi.order_item_product_id
+)
+SELECT *
+FROM discounted_sales
+ORDER BY revenue DESC;",hard
+"Show how often each discount is used relative to how long it was available, and rank them from most efficient to least efficient.","WITH durations AS (
+    SELECT 
+        discount_id,
+        (discount_end_date - discount_start_date) AS active_days
+    FROM discounts
+),
+usage_counts AS (
+    SELECT
+        d.discount_id,
+        COUNT(*) AS uses
+    FROM discounts d
+    JOIN product_discounts pd ON pd.product_discount_discount_id = d.discount_id
+    JOIN order_items oi ON oi.order_item_product_id = pd.product_discount_product_id
+    GROUP BY d.discount_id
+)
+SELECT
+    d.discount_id,
+    uc.uses,
+    EXTRACT(EPOCH FROM dur.active_days) / 86400 AS days_active,
+    (uc.uses / NULLIF(EXTRACT(EPOCH FROM dur.active_days) / 86400, 0)) AS efficiency
+FROM discounts d
+LEFT JOIN durations dur ON dur.discount_id = d.discount_id
+LEFT JOIN usage_counts uc ON uc.discount_id = d.discount_id
+ORDER BY efficiency DESC NULLS LAST;",hard
+Determine which discounts were used by the largest number of different customers.,"SELECT
+    d.discount_id,
+    COUNT(DISTINCT o.order_user_id) AS unique_customers
+FROM discounts d
+JOIN product_discounts pd ON pd.product_discount_discount_id = d.discount_id
+JOIN order_items oi ON oi.order_item_product_id = pd.product_discount_product_id
+JOIN orders o ON o.order_id = oi.order_item_order_id
+GROUP BY d.discount_id
+ORDER BY unique_customers DESC;",hard
+"For every product with multiple discounts over time, show which discount generated the highest sales volume.","WITH discount_sales AS (
+    SELECT
+        pd.product_discount_product_id AS product_id,
+        d.discount_id,
+        SUM(oi.order_item_price * oi.order_item_quantity) AS revenue
+    FROM discounts d
+    JOIN product_discounts pd ON pd.product_discount_discount_id = d.discount_id
+    JOIN order_items oi ON oi.order_item_product_id = pd.product_discount_product_id
+    JOIN orders o ON o.order_id = oi.order_item_order_id
+    WHERE o.order_created_at BETWEEN d.discount_start_date AND d.discount_end_date
+    GROUP BY pd.product_discount_product_id, d.discount_id
+),
+ranked AS (
+    SELECT
+        *,
+        RANK() OVER (PARTITION BY product_id ORDER BY revenue DESC) AS rnk
+    FROM discount_sales
+)
+SELECT *
+FROM ranked
+WHERE rnk = 1;",hard
+Identify discounts that overlap in time and create a timeline of how these overlapping discount periods affected product sales.,"WITH overlap AS (
+    SELECT 
+        d1.discount_id AS discount_a,
+        d2.discount_id AS discount_b
+    FROM discounts d1
+    JOIN discounts d2
+        ON d1.discount_id < d2.discount_id
+       AND d1.discount_start_date <= d2.discount_end_date
+       AND d2.discount_start_date <= d1.discount_end_date
+),
+sales_during_overlap AS (
+    SELECT
+        o.discount_a,
+        o.discount_b,
+        SUM(oi.order_item_price * oi.order_item_quantity) AS overlap_revenue
+    FROM overlap o
+    JOIN product_discounts pd1 ON pd1.product_discount_discount_id = o.discount_a
+    JOIN product_discounts pd2 ON pd2.product_discount_discount_id = o.discount_b
+    JOIN order_items oi ON oi.order_item_product_id IN (pd1.product_discount_product_id, pd2.product_discount_product_id)
+    JOIN orders ord ON ord.order_id = oi.order_item_order_id
+    GROUP BY o.discount_a, o.discount_b
+)
+SELECT *
+FROM sales_during_overlap;",hard
+Show me all the coupons that are currently active.," SELECT *
+FROM coupons
+WHERE NOW() BETWEEN coupon_start_date AND coupon_end_date;",easy
+List all coupons that will expire soon.,"SELECT *
+FROM coupons
+WHERE coupon_end_date <= NOW() + INTERVAL '7 days'
+ORDER BY coupon_end_date;",easy
+Find the newest coupons added to the system.,"SELECT *
+FROM coupons
+ORDER BY coupon_start_date DESC
+LIMIT 20;",easy
+Show all orders that used a specific coupon code.,"SELECT o.*
+FROM orders o
+JOIN order_coupons oc ON oc.order_coupon_order_id = o.order_id
+JOIN coupons c ON c.coupon_id = oc.order_coupon_coupon_id
+WHERE c.coupon_code = 'YOUR_COUPON_CODE_HERE';",easy
+Find the highest discount percentage offered among all coupons.,"SELECT MAX(coupon_discount_percentage) AS highest_coupon_discount
+FROM coupons;",easy
+"Which coupons were used the most in customer orders, and how many times was each one used?","SELECT 
+    c.coupon_id,
+    c.coupon_code,
+    COUNT(oc.order_coupon_order_id) AS times_used
+FROM coupons c
+LEFT JOIN order_coupons oc 
+       ON oc.order_coupon_coupon_id = c.coupon_id
+GROUP BY c.coupon_id, c.coupon_code
+ORDER BY times_used DESC;",medium
+Show the total discount value each coupon contributed across all orders where it was applied.,"SELECT
+    c.coupon_id,
+    c.coupon_code,
+    SUM(o.order_total * (c.coupon_discount_percentage / 100.0)) AS total_discount_value
+FROM coupons c
+JOIN order_coupons oc 
+      ON oc.order_coupon_coupon_id = c.coupon_id
 JOIN orders o 
-    ON o.order_id = t.order_id
-GROUP BY DATE_TRUNC('month', o.order_created_at)
-ORDER BY month;
-"
+      ON o.order_id = oc.order_coupon_order_id
+GROUP BY c.coupon_id, c.coupon_code
+ORDER BY total_discount_value DESC;",medium
+Find all coupons that were used by more than a certain number of different customers.,"SELECT
+    c.coupon_id,
+    c.coupon_code,
+    COUNT(DISTINCT o.order_user_id) AS unique_customers
+FROM coupons c
+JOIN order_coupons oc ON oc.order_coupon_coupon_id = c.coupon_id
+JOIN orders o ON o.order_id = oc.order_coupon_order_id
+GROUP BY c.coupon_id, c.coupon_code
+HAVING COUNT(DISTINCT o.order_user_id) > 5    -- change threshold as desired
+ORDER BY unique_customers DESC;",medium
+Compare how many orders used a coupon versus how many orders did not use any coupon during the same time period.,"SELECT
+    SUM(CASE WHEN oc.order_coupon_id IS NOT NULL THEN 1 ELSE 0 END) AS orders_with_coupons,
+    SUM(CASE WHEN oc.order_coupon_id IS NULL THEN 1 ELSE 0 END) AS orders_without_coupons
+FROM orders o
+LEFT JOIN order_coupons oc ON oc.order_coupon_order_id = o.order_id
+WHERE o.order_created_at BETWEEN '2025-01-01' AND '2025-12-31';",medium
+Show all coupons that give a higher percentage than the average discount offered across all coupons.,"SELECT *
+FROM coupons
+WHERE coupon_discount_percentage > (
+    SELECT AVG(coupon_discount_percentage) FROM coupons
+)
+ORDER BY coupon_discount_percentage DESC;",medium
+"For each coupon, show how many orders used it while it was still valid, and filter out coupons with no usage.","SELECT
+    c.coupon_id,
+    c.coupon_code,
+    COUNT(o.order_id) AS valid_usage
+FROM coupons c
+LEFT JOIN order_coupons oc 
+       ON oc.order_coupon_coupon_id = c.coupon_id
+LEFT JOIN orders o 
+       ON o.order_id = oc.order_coupon_order_id
+      AND o.order_created_at BETWEEN c.coupon_start_date AND c.coupon_end_date
+GROUP BY c.coupon_id, c.coupon_code
+HAVING COUNT(o.order_id) > 0;",medium
+List customers who used more than one type of coupon and show how many different ones they used.,"SELECT
+    o.order_user_id AS user_id,
+    COUNT(DISTINCT c.coupon_id) AS different_coupons_used
+FROM coupons c
+JOIN order_coupons oc ON oc.order_coupon_coupon_id = c.coupon_id
+JOIN orders o ON o.order_id = oc.order_coupon_order_id
+GROUP BY o.order_user_id
+HAVING COUNT(DISTINCT c.coupon_id) > 1
+ORDER BY different_coupons_used DESC;",medium
+"For each coupon, show the order in which customers used it, starting from the very first user to the most recent one.","WITH first_use_per_user AS (
+  SELECT
+    c.coupon_id,
+    c.coupon_code,
+    o.order_user_id,
+    MIN(o.order_created_at) AS first_used_at
+  FROM coupons c
+  JOIN order_coupons oc ON oc.order_coupon_coupon_id = c.coupon_id
+  JOIN orders o ON o.order_id = oc.order_coupon_order_id
+  GROUP BY c.coupon_id, c.coupon_code, o.order_user_id
+)
+SELECT
+  fu.coupon_id,
+  fu.coupon_code,
+  fu.order_user_id,
+  fu.first_used_at,
+  ROW_NUMBER() OVER (PARTITION BY fu.coupon_id ORDER BY fu.first_used_at, fu.order_user_id) AS usage_sequence_for_coupon
+FROM first_use_per_user fu
+ORDER BY fu.coupon_id, usage_sequence_for_coupon;",hard
+Identify coupons that overlapped in time with at least two other coupons and were still used more frequently than all overlapping ones.,"WITH overlaps AS (
+  SELECT
+    a.coupon_id AS coupon_id,
+    b.coupon_id AS overlapping_coupon_id
+  FROM coupons a
+  JOIN coupons b
+    ON a.coupon_id <> b.coupon_id
+   AND a.coupon_start_date <= b.coupon_end_date
+   AND b.coupon_start_date <= a.coupon_end_date
+),
+overlap_counts AS (
+  SELECT coupon_id, COUNT(DISTINCT overlapping_coupon_id) AS overlap_count
+  FROM overlaps
+  GROUP BY coupon_id
+  HAVING COUNT(DISTINCT overlapping_coupon_id) >= 2
+),
+coupon_usage AS (
+  SELECT
+    c.coupon_id,
+    COUNT(oc.order_coupon_id) AS usage_count
+  FROM coupons c
+  LEFT JOIN order_coupons oc ON oc.order_coupon_coupon_id = c.coupon_id
+  GROUP BY c.coupon_id
+),
+max_overlapping_usage AS (
+  SELECT
+    o.coupon_id,
+    MAX(co.usage_count) FILTER (WHERE co.coupon_id <> o.overlapping_coupon_id OR co.coupon_id IS NOT NULL) AS max_overlap_usage
+  FROM (
+    SELECT DISTINCT coupon_id, overlapping_coupon_id
+    FROM overlaps
+  ) o
+  JOIN coupon_usage co ON co.coupon_id = o.overlapping_coupon_id
+  GROUP BY o.coupon_id
+)
+SELECT
+  cu.coupon_id,
+  cu.usage_count,
+  mou.max_overlap_usage
+FROM coupon_usage cu
+JOIN overlap_counts oc ON oc.coupon_id = cu.coupon_id
+LEFT JOIN max_overlapping_usage mou ON mou.coupon_id = cu.coupon_id
+WHERE cu.usage_count > COALESCE(mou.max_overlap_usage, 0)
+ORDER BY cu.usage_count DESC;",hard
+"For every coupon, calculate how long it took before customers started using it, and compare that delay to all other coupons.","WITH first_use AS (
+  SELECT
+    c.coupon_id,
+    c.coupon_code,
+    MIN(o.order_created_at) AS first_used_at,
+    c.coupon_start_date
+  FROM coupons c
+  LEFT JOIN product_discounts pd ON pd.product_discount_discount_id = c.coupon_id
+  LEFT JOIN order_items oi ON oi.order_item_product_id = pd.product_discount_product_id
+  LEFT JOIN orders o ON o.order_id = oi.order_item_order_id
+    AND o.order_created_at BETWEEN c.coupon_start_date AND c.coupon_end_date
+  GROUP BY c.coupon_id, c.coupon_code, c.coupon_start_date
+)
+SELECT
+  fu.coupon_id,
+  fu.coupon_code,
+  fu.first_used_at,
+  fu.coupon_start_date,
+  CASE
+    WHEN fu.first_used_at IS NULL THEN NULL
+    ELSE EXTRACT(EPOCH FROM (fu.first_used_at - fu.coupon_start_date)) / 86400.0
+  END AS days_until_first_use,
+  RANK() OVER (ORDER BY CASE WHEN fu.first_used_at IS NULL THEN NULL ELSE EXTRACT(EPOCH FROM (fu.first_used_at - fu.coupon_start_date)) END) AS delay_rank
+FROM first_use fu
+ORDER BY delay_rank NULLS LAST;",hard
+"Find customers who used multiple coupons and determine which coupon was their most commonly used one, ranking their usage patterns.","WITH usage_per_user_coupon AS (
+  SELECT
+    o.order_user_id AS user_id,
+    c.coupon_id,
+    c.coupon_code,
+    COUNT(*) AS uses
+  FROM order_coupons oc
+  JOIN coupons c ON c.coupon_id = oc.order_coupon_coupon_id
+  JOIN orders o ON o.order_id = oc.order_coupon_order_id
+  GROUP BY o.order_user_id, c.coupon_id, c.coupon_code
+),
+user_coupon_rank AS (
+  SELECT
+    upuc.*,
+    ROW_NUMBER() OVER (PARTITION BY upuc.user_id ORDER BY upuc.uses DESC, upuc.coupon_id) AS rn,
+    COUNT(DISTINCT upuc.coupon_id) OVER (PARTITION BY upuc.user_id) AS distinct_coupon_count
+  FROM usage_per_user_coupon upuc
+)
+SELECT
+  ucr.user_id,
+  u.user_name,
+  ucr.coupon_id,
+  ucr.coupon_code,
+  ucr.uses AS times_used,
+  ucr.rn AS rank_within_user,
+  ucr.distinct_coupon_count
+FROM user_coupon_rank ucr
+JOIN users u ON u.user_id = ucr.user_id
+WHERE ucr.distinct_coupon_count > 1
+  AND ucr.rn = 1
+ORDER BY ucr.distinct_coupon_count DESC, ucr.times_used DESC;",hard
+Show how coupon usage changed over time by calculating a running total of uses for each coupon throughout its active period.,"WITH coupon_calendar AS (
+  SELECT
+    c.coupon_id,
+    c.coupon_code,
+    g.day::date AS day
+  FROM coupons c
+  JOIN LATERAL generate_series(c.coupon_start_date::date, c.coupon_end_date::date, INTERVAL '1 day') AS g(day) ON TRUE
+),
+daily_coupon_usage AS (
+  SELECT
+    cc.coupon_id,
+    cc.coupon_code,
+    cc.day,
+    COUNT(oc.order_coupon_id) AS uses_on_day
+  FROM coupon_calendar cc
+  LEFT JOIN order_coupons oc
+    ON oc.order_coupon_coupon_id = cc.coupon_id
+  LEFT JOIN orders o ON o.order_id = oc.order_coupon_order_id
+    AND DATE(o.order_created_at) = cc.day
+  GROUP BY cc.coupon_id, cc.coupon_code, cc.day
+)
+SELECT
+  dcu.coupon_id,
+  dcu.coupon_code,
+  dcu.day,
+  dcu.uses_on_day,
+  SUM(dcu.uses_on_day) OVER (PARTITION BY dcu.coupon_id ORDER BY dcu.day ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulative_uses
+FROM daily_coupon_usage dcu
+ORDER BY dcu.coupon_id, dcu.day;",hard
+Find coupons that appear to influence order behavior by showing orders made shortly before and shortly after each coupon was applied.,"WITH coupon_usages AS (
+  SELECT
+    oc.order_coupon_id,
+    oc.order_coupon_coupon_id AS coupon_id,
+    oc.order_coupon_order_id AS coupon_order_id,
+    o.order_user_id,
+    o.order_created_at AS coupon_used_at
+  FROM order_coupons oc
+  JOIN orders o ON o.order_id = oc.order_coupon_order_id
+),
+before_after_counts AS (
+  SELECT
+    cu.*,
+    SUM(CASE WHEN o.order_created_at BETWEEN cu.coupon_used_at - INTERVAL '7 days' AND cu.coupon_used_at - INTERVAL '1 second' THEN 1 ELSE 0 END) AS orders_before_7d,
+    SUM(CASE WHEN o.order_created_at BETWEEN cu.coupon_used_at + INTERVAL '1 second' AND cu.coupon_used_at + INTERVAL '7 days' THEN 1 ELSE 0 END) AS orders_after_7d
+  FROM coupon_usages cu
+  JOIN orders o ON o.order_user_id = cu.order_user_id
+  GROUP BY cu.order_coupon_id, cu.coupon_id, cu.coupon_order_id, cu.order_user_id, cu.coupon_used_at
+)
+SELECT
+  bac.coupon_id,
+  c.coupon_code,
+  bac.coupon_order_id,
+  bac.order_user_id,
+  bac.coupon_used_at,
+  bac.orders_before_7d,
+  bac.orders_after_7d
+FROM before_after_counts bac
+JOIN coupons c ON c.coupon_id = bac.coupon_id
+ORDER BY bac.coupon_id, bac.coupon_used_at;",hard
+"Show all the feedback left by customers, sorted from newest to oldest.","SELECT *
+FROM reviews
+ORDER BY review_created_at DESC;",easy
+List all the comments made for a specific product.,"SELECT *
+FROM reviews
+WHERE review_product_id = :product_id;",easy
+Find the highest rating a product has ever received.,"SELECT MAX(review_rating) AS highest_rating
+FROM reviews
+WHERE review_product_id = :product_id;",easy
+Show the most recent feedback left by a specific customer.,"SELECT *
+FROM reviews
+WHERE review_user_id = :user_id
+ORDER BY review_created_at DESC
+LIMIT 1;",easy
+Get all reviews that have a rating above a certain number.,"SELECT *
+FROM reviews
+WHERE review_rating > :rating_threshold
+ORDER BY review_rating DESC;",easy
+List the first few reviews ever written on the platform.,"SELECT *
+FROM reviews
+ORDER BY review_created_at ASC
+LIMIT 5;",easy
+"Which products have the highest average feedback score, and only show the ones with more than a few reviews?","SELECT
+  p.product_id,
+  p.product_name,
+  AVG(r.review_rating) AS avg_rating,
+  COUNT(r.review_id) AS review_count
+FROM products p
+JOIN reviews r ON r.review_product_id = p.product_id
+GROUP BY p.product_id, p.product_name
+HAVING COUNT(r.review_id) > 3
+ORDER BY avg_rating DESC;",medium
+"Find the customers who wrote the most feedback overall, and show how many reviews each person has written.","SELECT
+  u.user_id,
+  u.user_name,
+  COUNT(r.review_id) AS total_reviews
+FROM users u
+JOIN reviews r ON r.review_user_id = u.user_id
+GROUP BY u.user_id, u.user_name
+ORDER BY total_reviews DESC;",medium
+Show products that received both very high ratings and very low ratings from different customers.,"SELECT
+  p.product_id,
+  p.product_name,
+  MIN(r.review_rating) AS lowest_rating,
+  MAX(r.review_rating) AS highest_rating
+FROM products p
+JOIN reviews r ON r.review_product_id = p.product_id
+GROUP BY p.product_id, p.product_name
+HAVING MIN(r.review_rating) <= 2
+   AND MAX(r.review_rating) >= 4;",medium
+Find the average rating each vendor’s products receive and show only vendors whose products score above the overall platform average.,"WITH overall_avg AS (
+  SELECT AVG(review_rating) AS avg_rating
+  FROM reviews
+),
+vendor_avg AS (
+  SELECT
+    v.vendor_id,
+    v.vendor_name,
+    AVG(r.review_rating) AS vendor_rating
+  FROM vendors v
+  JOIN product_vendors pv ON pv.product_vendor_vendor_id = v.vendor_id
+  JOIN products p ON p.product_id = pv.product_vendor_product_id
+  JOIN reviews r ON r.review_product_id = p.product_id
+  GROUP BY v.vendor_id, v.vendor_name
+)
+SELECT *
+FROM vendor_avg va
+JOIN overall_avg oa ON va.vendor_rating > oa.avg_rating
+ORDER BY va.vendor_rating DESC;",medium
+"List categories along with how many total reviews their products have, and filter out categories with no feedback at all.","SELECT
+  c.category_id,
+  c.category_name,
+  COUNT(r.review_id) AS review_count
+FROM categories c
+JOIN category_products cp ON cp.category_product_category_id = c.category_id
+JOIN products p ON p.product_id = cp.category_product_product_id
+LEFT JOIN reviews r ON r.review_product_id = p.product_id
+GROUP BY c.category_id, c.category_name
+HAVING COUNT(r.review_id) > 0
+ORDER BY review_count DESC;",medium
+Show the most frequently reviewed products and include a label indicating whether each one has more positive or negative feedback overall.,"SELECT
+  p.product_id,
+  p.product_name,
+  COUNT(r.review_id) AS total_reviews,
+  CASE
+    WHEN AVG(r.review_rating) >= 3 THEN 'positive'
+    ELSE 'negative'
+  END AS feedback_type
+FROM products p
+JOIN reviews r ON r.review_product_id = p.product_id
+GROUP BY p.product_id, p.product_name
+ORDER BY total_reviews DESC;",medium
+"For every product, show how each individual review compares to all other reviews for the same product, and list the review’s rank from highest rating to lowest.","SELECT
+  r.review_id,
+  r.review_product_id,
+  p.product_name,
+  r.review_user_id,
+  r.review_rating,
+  r.review_comment,
+  r.review_created_at,
+  COUNT(*) OVER (PARTITION BY r.review_product_id)                           AS total_reviews_for_product,
+  ROW_NUMBER() OVER (
+    PARTITION BY r.review_product_id
+    ORDER BY r.review_rating DESC, r.review_created_at DESC, r.review_id
+  )                                                                          AS rank_high_to_low,
+  RANK() OVER (
+    PARTITION BY r.review_product_id
+    ORDER BY r.review_rating DESC
+  )                                                                          AS rating_rank_ties,
+  ROUND(100.0 * (1.0 - (ROW_NUMBER() OVER (
+                      PARTITION BY r.review_product_id
+                      ORDER BY r.review_rating DESC, r.review_created_at DESC, r.review_id
+                    ) - 1)::numeric / NULLIF(COUNT(*) OVER (PARTITION BY r.review_product_id) - 1,0)),2) AS percentile_rank
+FROM reviews r
+JOIN products p ON p.product_id = r.review_product_id
+ORDER BY r.review_product_id, rank_high_to_low;
+",hard
+"Find products whose recent feedback (latest few reviews) is significantly worse than their older feedback, and quantify how big the drop is.","WITH numbered AS (
+  SELECT
+    r.*,
+    ROW_NUMBER() OVER (PARTITION BY r.review_product_id ORDER BY r.review_created_at DESC, r.review_id DESC) AS rn_desc,
+    COUNT(*) OVER (PARTITION BY r.review_product_id) AS total_reviews
+  FROM reviews r
+),
+recent AS (
+  SELECT review_product_id,
+         AVG(review_rating) AS avg_recent,
+         COUNT(*) AS recent_count
+  FROM numbered
+  WHERE rn_desc <= 5
+  GROUP BY review_product_id
+),
+older AS (
+  SELECT review_product_id,
+         AVG(review_rating) AS avg_older,
+         COUNT(*) AS older_count
+  FROM numbered
+  WHERE rn_desc > 5
+  GROUP BY review_product_id
+)
+SELECT
+  p.product_id,
+  p.product_name,
+  COALESCE(recent.avg_recent, 0) AS avg_recent,
+  COALESCE(older.avg_older, 0) AS avg_older,
+  recent.recent_count,
+  older.older_count,
+  CASE
+    WHEN older.avg_older IS NULL OR older.avg_older = 0 THEN NULL
+    ELSE ROUND((recent.avg_recent - older.avg_older) / older.avg_older * 100.0, 2)
+  END AS pct_change_recent_vs_older
+FROM products p
+LEFT JOIN recent ON recent.review_product_id = p.product_id
+LEFT JOIN older  ON older.review_product_id = p.product_id
+WHERE recent.recent_count IS NOT NULL
+  AND (older.avg_older IS NOT NULL AND recent.avg_recent < 0.8 * older.avg_older)
+ORDER BY pct_change_recent_vs_older;
+",hard
+Identify customers who tend to give unusually high or unusually low ratings compared to the average rating given by all other customers.,"WITH user_stats AS (
+  SELECT
+    r.review_user_id AS user_id,
+    AVG(r.review_rating)::numeric AS user_avg,
+    COUNT(*) AS user_count
+  FROM reviews r
+  GROUP BY r.review_user_id
+),
+global AS (
+  SELECT
+    SUM(r.review_rating)::numeric AS sum_all,
+    COUNT(*)::int AS cnt_all
+  FROM reviews r
+)
+SELECT
+  us.user_id,
+  u.user_name,
+  us.user_avg,
+  us.user_count,
+  ROUND(((us.user_avg - ((g.sum_all - us.user_avg * us.user_count) / NULLIF(g.cnt_all - us.user_count,0)))::numeric), 3) AS diff_vs_others_avg
+FROM user_stats us
+CROSS JOIN global g
+LEFT JOIN users u ON u.user_id = us.user_id
+WHERE g.cnt_all - us.user_count > 0
+ AND ABS(us.user_avg - ((g.sum_all - us.user_avg * us.user_count) / NULLIF(g.cnt_all - us.user_count,0))) > 1.0
+ORDER BY ABS(diff_vs_others_avg) DESC;",hard
+Show the timeline of each product’s ratings and include a running average that updates each time a new review is added.,"SELECT
+  r.review_product_id,
+  p.product_name,
+  r.review_id,
+  r.review_user_id,
+  r.review_rating,
+  r.review_created_at,
+  AVG(r.review_rating) OVER (
+    PARTITION BY r.review_product_id
+    ORDER BY r.review_created_at, r.review_id
+    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+  )::numeric(5,3) AS running_avg_rating,
+  COUNT(*) OVER (
+    PARTITION BY r.review_product_id
+    ORDER BY r.review_created_at, r.review_id
+    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+  ) AS reviews_so_far
+FROM reviews r
+JOIN products p ON p.product_id = r.review_product_id
+ORDER BY r.review_product_id, r.review_created_at, r.review_id;",hard
+"Find vendors whose products consistently receive better reviews over time, using a trend based on the order the reviews were written.","WITH vendor_review_dates AS (
+  SELECT
+    v.vendor_id,
+    v.vendor_name,
+    MIN(r.review_created_at) AS first_review_at,
+    MAX(r.review_created_at) AS last_review_at
+  FROM vendors v
+  JOIN product_vendors pv ON pv.product_vendor_vendor_id = v.vendor_id
+  JOIN products p ON p.product_id = pv.product_vendor_product_id
+  JOIN reviews r ON r.review_product_id = p.product_id
+  GROUP BY v.vendor_id, v.vendor_name
+  HAVING COUNT(r.review_id) > 0
+),
+vendor_half_avg AS (
+  SELECT
+    vrd.vendor_id,
+    AVG(CASE WHEN r.review_created_at <= (vrd.first_review_at + (vrd.last_review_at - vrd.first_review_at)/2) THEN r.review_rating END) AS avg_first_half,
+    AVG(CASE WHEN r.review_created_at >  (vrd.first_review_at + (vrd.last_review_at - vrd.first_review_at)/2) THEN r.review_rating END) AS avg_second_half
+  FROM vendor_review_dates vrd
+  JOIN product_vendors pv ON pv.product_vendor_vendor_id = vrd.vendor_id
+  JOIN reviews r ON r.review_product_id = pv.product_vendor_product_id
+  GROUP BY vrd.vendor_id
+)
+SELECT
+  v.vendor_id,
+  v.vendor_name,
+  vha.avg_first_half,
+  vha.avg_second_half,
+  CASE
+    WHEN vha.avg_first_half IS NULL OR vha.avg_second_half IS NULL THEN NULL
+    ELSE ROUND((vha.avg_second_half - vha.avg_first_half)::numeric,3)
+  END AS change_in_avg
+FROM vendors v
+JOIN vendor_half_avg vha ON vha.vendor_id = v.vendor_id
+WHERE vha.avg_second_half > vha.avg_first_half
+ORDER BY change_in_avg DESC NULLS LAST;",hard
+"Find products where multiple customers submitted feedback on the exact same day, and determine which day had the most such activity.","WITH per_day_activity AS (
+  SELECT
+    r.review_product_id,
+    p.product_name,
+    DATE(r.review_created_at) AS day,
+    COUNT(DISTINCT r.review_user_id) AS distinct_reviewers,
+    COUNT(r.review_id) AS reviews_on_day
+  FROM reviews r
+  JOIN products p ON p.product_id = r.review_product_id
+  GROUP BY r.review_product_id, p.product_name, DATE(r.review_created_at)
+  HAVING COUNT(DISTINCT r.review_user_id) > 1
+)
+SELECT
+  pda.review_product_id,
+  pda.product_name,
+  pda.day,
+  pda.distinct_reviewers,
+  pda.reviews_on_day
+FROM (
+  SELECT *,
+         ROW_NUMBER() OVER (PARTITION BY review_product_id ORDER BY distinct_reviewers DESC, reviews_on_day DESC) AS rn
+  FROM per_day_activity
+) pda
+WHERE pda.rn = 1
+ORDER BY pda.distinct_reviewers DESC, pda.reviews_on_day DESC;",hard
+Show me all the categories in the system.,"SELECT
+  category_id,
+  category_name,
+  category_description,
+  category_created_at
+FROM categories;",easy
+List the newest categories added.,"SELECT
+  category_id,
+  category_name,
+  category_description,
+  category_created_at
+FROM categories
+ORDER BY category_created_at DESC
+LIMIT 10;",easy
+Find categories whose name includes a certain word.,"SELECT
+  category_id,
+  category_name,
+  category_description
+FROM categories
+WHERE category_name ILIKE :keyword;",easy
+"Which categories have the highest number of products, and only show the ones that have more than a few items?","SELECT
+  c.category_id,
+  c.category_name,
+  COUNT(cp.category_product_id) AS total_products
+FROM categories c
+JOIN category_products cp
+  ON cp.category_product_category_id = c.category_id
+GROUP BY c.category_id, c.category_name
+HAVING COUNT(cp.category_product_id) > :min_count
+ORDER BY total_products DESC;",medium
+"For each category, show the average rating of all products inside it, and list only the categories whose overall score is above the global average rating.","WITH category_avg AS (
+  SELECT
+    cp.category_product_category_id AS category_id,
+    AVG(r.review_rating) AS avg_category_rating
+  FROM category_products cp
+  JOIN reviews r
+    ON r.review_product_id = cp.category_product_product_id
+  GROUP BY cp.category_product_category_id
+),
+global_avg AS (
+  SELECT AVG(review_rating) AS avg_global_rating
+  FROM reviews
+)
+SELECT
+  c.category_id,
+  c.category_name,
+  ca.avg_category_rating
+FROM category_avg ca
+JOIN global_avg ga ON TRUE
+JOIN categories c ON c.category_id = ca.category_id
+WHERE ca.avg_category_rating > ga.avg_global_rating
+ORDER BY ca.avg_category_rating DESC;",medium
+Show categories that currently have products with prices both above and below a specific threshold.,"SELECT
+  c.category_id,
+  c.category_name
+FROM categories c
+JOIN category_products cp
+  ON cp.category_product_category_id = c.category_id
+JOIN products p
+  ON p.product_id = cp.category_product_product_id
+GROUP BY c.category_id, c.category_name
+HAVING 
+  COUNT(*) FILTER (WHERE p.product_price > :threshold) > 0
+  AND
+  COUNT(*) FILTER (WHERE p.product_price < :threshold) > 0;",medium
+"For every category, show a ranked list of its products based on average review rating, and highlight which product is currently the top performer.","WITH prod_avg AS (
+  SELECT
+    cp.category_product_category_id AS category_id,
+    p.product_id,
+    p.product_name,
+    AVG(r.review_rating) AS avg_rating,
+    COUNT(r.review_id) AS review_count
+  FROM category_products cp
+  JOIN products p ON p.product_id = cp.category_product_product_id
+  LEFT JOIN reviews r ON r.review_product_id = p.product_id
+  GROUP BY cp.category_product_category_id, p.product_id, p.product_name
+)
+SELECT
+  pa.category_id,
+  c.category_name,
+  pa.product_id,
+  pa.product_name,
+  COALESCE(pa.avg_rating, 0) AS avg_rating,
+  pa.review_count,
+  ROW_NUMBER() OVER (PARTITION BY pa.category_id ORDER BY pa.avg_rating DESC NULLS LAST, pa.review_count DESC) AS rank_in_category,
+  CASE WHEN ROW_NUMBER() OVER (PARTITION BY pa.category_id ORDER BY pa.avg_rating DESC NULLS LAST, pa.review_count DESC) = 1 THEN TRUE ELSE FALSE END AS is_top_product
+FROM prod_avg pa
+JOIN categories c ON c.category_id = pa.category_id
+ORDER BY pa.category_id, rank_in_category;",hard
+"Find categories whose product ratings have been improving over time, using a trend analysis that compares the earliest reviews with the most recent ones.","WITH cat_bounds AS (
+  SELECT
+    cp.category_product_category_id AS category_id,
+    MIN(r.review_created_at) AS first_review_at,
+    MAX(r.review_created_at) AS last_review_at
+  FROM category_products cp
+  JOIN reviews r ON r.review_product_id = cp.category_product_product_id
+  GROUP BY cp.category_product_category_id
+  HAVING COUNT(r.review_id) >= 4 
+),
+cat_split_avg AS (
+  SELECT
+    cb.category_id,
+    AVG(CASE WHEN r.review_created_at <= (cb.first_review_at + (cb.last_review_at - cb.first_review_at)/2) THEN r.review_rating END) AS avg_early,
+    AVG(CASE WHEN r.review_created_at >  (cb.first_review_at + (cb.last_review_at - cb.first_review_at)/2) THEN r.review_rating END) AS avg_late,
+    COUNT(CASE WHEN r.review_created_at <= (cb.first_review_at + (cb.last_review_at - cb.first_review_at)/2) THEN 1 END) AS cnt_early,
+    COUNT(CASE WHEN r.review_created_at >  (cb.first_review_at + (cb.last_review_at - cb.first_review_at)/2) THEN 1 END) AS cnt_late
+  FROM cat_bounds cb
+  JOIN category_products cp ON cp.category_product_category_id = cb.category_id
+  JOIN reviews r ON r.review_product_id = cp.category_product_product_id
+  GROUP BY cb.category_id
+)
+SELECT
+  c.category_id,
+  c.category_name,
+  sa.avg_early,
+  sa.avg_late,
+  sa.cnt_early,
+  sa.cnt_late,
+  CASE
+    WHEN sa.avg_early IS NULL OR sa.avg_late IS NULL THEN 'insufficient_data'
+    WHEN sa.avg_late > sa.avg_early THEN 'improving'
+    WHEN sa.avg_late < sa.avg_early THEN 'declining'
+    ELSE 'flat'
+  END AS trend,
+  ROUND(
+    CASE WHEN sa.avg_early IS NULL OR sa.avg_early = 0 THEN NULL
+         ELSE (sa.avg_late - sa.avg_early) / sa.avg_early * 100 END
+  ,2) AS pct_change
+FROM cat_split_avg sa
+JOIN categories c ON c.category_id = sa.category_id
+WHERE sa.cnt_early >= 2 AND sa.cnt_late >= 2   -- ensure each side has some reviews
+ORDER BY pct_change DESC NULLS LAST;",hard
+"Show categories where products have the widest variation in pricing, and calculate the price gap between the highest-priced and lowest-priced item within each category.","SELECT
+  c.category_id,
+  c.category_name,
+  MIN(p.product_price) AS min_price,
+  MAX(p.product_price) AS max_price,
+  (MAX(p.product_price) - MIN(p.product_price)) AS price_gap,
+  (CASE WHEN MIN(p.product_price) IS NULL THEN NULL
+        WHEN MIN(p.product_price) = 0 THEN NULL
+        ELSE ROUND((MAX(p.product_price) - MIN(p.product_price)) / NULLIF(MIN(p.product_price),0)::numeric * 100,2) END) AS gap_pct_vs_min
+FROM categories c
+JOIN category_products cp ON cp.category_product_category_id = c.category_id
+JOIN products p ON p.product_id = cp.category_product_product_id
+GROUP BY c.category_id, c.category_name
+HAVING COUNT(p.product_id) > 1
+ORDER BY price_gap DESC NULLS LAST;",hard
+"For each category, display a running count of products ordered by their creation date, showing how the category grew over time.","WITH prod_dates AS (
+  SELECT DISTINCT
+    cp.category_product_category_id AS category_id,
+    p.product_id,
+    p.product_created_at::date AS created_date
+  FROM category_products cp
+  JOIN products p ON p.product_id = cp.category_product_product_id
+)
+SELECT
+  pd.category_id,
+  c.category_name,
+  pd.created_date,
+  COUNT(*) OVER (
+    PARTITION BY pd.category_id
+    ORDER BY pd.created_date
+    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+  ) AS cumulative_products
+FROM prod_dates pd
+JOIN categories c ON c.category_id = pd.category_id
+ORDER BY pd.category_id, pd.created_date;",hard
+Identify categories that contain products from multiple vendors and determine which vendor contributes the largest share of products in each category.,"WITH vendor_counts AS (
+  SELECT
+    cp.category_product_category_id AS category_id,
+    pv.product_vendor_vendor_id AS vendor_id,
+    COUNT(DISTINCT pv.product_vendor_product_id) AS product_count
+  FROM category_products cp
+  JOIN product_vendors pv ON pv.product_vendor_product_id = cp.category_product_product_id
+  GROUP BY cp.category_product_category_id, pv.product_vendor_vendor_id
+),
+category_totals AS (
+  SELECT category_id, SUM(product_count) AS total_products
+  FROM vendor_counts
+  GROUP BY category_id
+),
+vendor_share AS (
+  SELECT
+    vc.*,
+    ct.total_products,
+    vc.product_count::numeric / NULLIF(ct.total_products,0) AS share,
+    ROW_NUMBER() OVER (PARTITION BY vc.category_id ORDER BY vc.product_count DESC) AS rn
+  FROM vendor_counts vc
+  JOIN category_totals ct ON ct.category_id = vc.category_id
+)
+SELECT
+  c.category_id,
+  c.category_name,
+  vs.vendor_id,
+  v.vendor_name,
+  vs.product_count,
+  vs.total_products,
+  ROUND(vs.share * 100,2) AS percent_of_category_products
+FROM vendor_share vs
+JOIN categories c ON c.category_id = vs.category_id
+JOIN vendors v ON v.vendor_id = vs.vendor_id
+WHERE vs.rn = 1
+  AND vs.total_products > 1
+ORDER BY percent_of_category_products DESC;",hard
+Find the single most influential review within each category by measuring how much the review’s rating deviates from the typical rating of that category.,"WITH category_avg AS (
+  SELECT
+    cp.category_product_category_id AS category_id,
+    AVG(r.review_rating)::numeric AS category_avg
+  FROM category_products cp
+  JOIN reviews r ON r.review_product_id = cp.category_product_product_id
+  GROUP BY cp.category_product_category_id
+),
+category_reviews AS (
+  SELECT
+    cp.category_product_category_id AS category_id,
+    r.review_id,
+    r.review_product_id,
+    r.review_user_id,
+    r.review_rating,
+    r.review_comment,
+    r.review_created_at,
+    ca.category_avg,
+    ABS(r.review_rating - ca.category_avg) AS abs_deviation
+  FROM category_products cp
+  JOIN reviews r ON r.review_product_id = cp.category_product_product_id
+  JOIN category_avg ca ON ca.category_id = cp.category_product_category_id
+)
+SELECT
+  cr.category_id,
+  cat.category_name,
+  cr.review_id,
+  cr.review_product_id,
+  p.product_name,
+  cr.review_user_id,
+  u.user_name,
+  cr.review_rating,
+  cr.category_avg,
+  cr.abs_deviation,
+  cr.review_comment,
+  cr.review_created_at
+FROM (
+  SELECT *,
+         ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY abs_deviation DESC, review_created_at DESC) AS rn
+  FROM category_reviews
+) cr
+JOIN categories cat ON cat.category_id = cr.category_id
+LEFT JOIN products p ON p.product_id = cr.review_product_id
+LEFT JOIN users u ON u.user_id = cr.review_user_id
+WHERE cr.rn = 1
+ORDER BY cr.abs_deviation DESC;",hard
+Show me all the tags in the system.,"SELECT *
+FROM tags;",easy
+List all tags sorted alphabetically.,"SELECT *
+FROM tags
+ORDER BY tag_name ASC;",easy
+Find tags whose name contains a specific keyword.,"SELECT *
+FROM tags
+WHERE tag_name ILIKE '%keyword%';",easy
+Show tags that are linked to more than one product.,"SELECT
+  t.tag_id,
+  t.tag_name,
+  COUNT(pt.product_tag_product_id) AS product_count
+FROM tags t
+JOIN product_tags pt ON pt.product_tag_tag_id = t.tag_id
+GROUP BY t.tag_id, t.tag_name
+HAVING COUNT(pt.product_tag_product_id) > 1;",easy
+Find tags that currently have no products linked to them.,"SELECT t.*
+FROM tags t
+LEFT JOIN product_tags pt ON pt.product_tag_tag_id = t.tag_id
+WHERE pt.product_tag_product_id IS NULL;",easy
+"Which tags are used the most, and how many products are associated with each tag?","SELECT
+  t.tag_id,
+  t.tag_name,
+  COUNT(pt.product_tag_product_id) AS product_count
+FROM tags t
+JOIN product_tags pt ON pt.product_tag_tag_id = t.tag_id
+GROUP BY t.tag_id, t.tag_name
+ORDER BY product_count DESC;",medium
+Show tags that are linked to products whose average price is above a certain amount.,"SELECT
+  t.tag_id,
+  t.tag_name,
+  AVG(p.product_price) AS avg_price
+FROM tags t
+JOIN product_tags pt ON pt.product_tag_tag_id = t.tag_id
+JOIN products p ON p.product_id = pt.product_tag_product_id
+GROUP BY t.tag_id, t.tag_name
+HAVING AVG(p.product_price) > 100; ",medium
+"List tags along with the number of products under each one, but only show those that have more products than the overall average.","WITH tag_counts AS (
+  SELECT
+    t.tag_id,
+    t.tag_name,
+    COUNT(pt.product_tag_product_id) AS product_count
+  FROM tags t
+  LEFT JOIN product_tags pt ON pt.product_tag_tag_id = t.tag_id
+  GROUP BY t.tag_id, t.tag_name
+),
+overall_avg AS (
+  SELECT AVG(product_count) AS avg_count
+  FROM tag_counts
+)
+SELECT tc.*
+FROM tag_counts tc
+CROSS JOIN overall_avg oa
+WHERE tc.product_count > oa.avg_count;",medium
+Find tags that appear in products that also belong to multiple categories.,"SELECT DISTINCT
+  t.tag_id,
+  t.tag_name
+FROM tags t
+JOIN product_tags pt ON pt.product_tag_tag_id = t.tag_id
+JOIN category_products cp ON cp.category_product_product_id = pt.product_tag_product_id
+GROUP BY t.tag_id, t.tag_name, pt.product_tag_product_id
+HAVING COUNT(cp.category_product_category_id) > 1;",medium
+Show each tag along with the highest-priced product associated with it.,"SELECT
+  t.tag_id,
+  t.tag_name,
+  MAX(p.product_price) AS highest_price
+FROM tags t
+JOIN product_tags pt ON pt.product_tag_tag_id = t.tag_id
+JOIN products p ON p.product_id = pt.product_tag_product_id
+GROUP BY t.tag_id, t.tag_name
+ORDER BY highest_price DESC;",medium
+"For each label used on products, identify which item has the strongest customer feedback and show only that top-ranked item per label.","WITH product_avg_rating AS (
+  SELECT
+    pt.product_tag_tag_id AS tag_id,
+    p.product_id,
+    p.product_name,
+    AVG(r.review_rating) AS avg_rating,
+    COUNT(r.review_id) AS review_count
+  FROM product_tags pt
+  JOIN products p ON p.product_id = pt.product_tag_product_id
+  LEFT JOIN reviews r ON r.review_product_id = p.product_id
+  GROUP BY pt.product_tag_tag_id, p.product_id, p.product_name
+)
+SELECT
+  tar.tag_id,
+  t.tag_name,
+  tar.product_id,
+  tar.product_name,
+  COALESCE(tar.avg_rating, 0) AS avg_rating,
+  tar.review_count
+FROM (
+  SELECT *,
+         ROW_NUMBER() OVER (PARTITION BY tag_id ORDER BY avg_rating DESC NULLS LAST, review_count DESC) AS rn
+  FROM product_avg_rating
+) tar
+JOIN tags t ON t.tag_id = tar.tag_id
+WHERE tar.rn = 1
+ORDER BY tar.avg_rating DESC NULLS LAST;",hard
+"Among all labels, determine which ones cover items with the largest spread in pricing, and rank these labels from widest variation to smallest.","SELECT
+  t.tag_id,
+  t.tag_name,
+  MIN(p.product_price) AS min_price,
+  MAX(p.product_price) AS max_price,
+  (MAX(p.product_price) - MIN(p.product_price)) AS price_gap
+FROM tags t
+JOIN product_tags pt ON pt.product_tag_tag_id = t.tag_id
+JOIN products p ON p.product_id = pt.product_tag_product_id
+GROUP BY t.tag_id, t.tag_name
+HAVING COUNT(p.product_id) > 1
+ORDER BY price_gap DESC NULLS LAST;",hard
+Find labels applied to items whose customer feedback has noticeably improved over time when comparing older opinions to more recent ones.,"WITH tag_review_times AS (
+  SELECT
+    pt.product_tag_tag_id AS tag_id,
+    r.review_id,
+    r.review_rating,
+    r.review_created_at
+  FROM product_tags pt
+  JOIN reviews r ON r.review_product_id = pt.product_tag_product_id
+),
+tag_bounds AS (
+  SELECT
+    tag_id,
+    MIN(review_created_at) AS first_at,
+    MAX(review_created_at) AS last_at,
+    COUNT(*) AS total_reviews
+  FROM tag_review_times
+  GROUP BY tag_id
+  HAVING COUNT(*) >= 8  -- require enough data; change threshold if desired
+),
+tag_split AS (
+  SELECT
+    trt.tag_id,
+    trt.review_rating,
+    trt.review_created_at,
+    tb.first_at,
+    tb.last_at,
+    CASE
+      WHEN trt.review_created_at <= (tb.first_at + (tb.last_at - tb.first_at) / 2) THEN 'early'
+      ELSE 'late'
+    END AS period
+  FROM tag_review_times trt
+  JOIN tag_bounds tb ON tb.tag_id = trt.tag_id
+),
+tag_aggregates AS (
+  SELECT
+    tag_id,
+    AVG(CASE WHEN period = 'early' THEN review_rating END) AS avg_early,
+    AVG(CASE WHEN period = 'late'  THEN review_rating END) AS avg_late,
+    COUNT(CASE WHEN period = 'early' THEN 1 END) AS cnt_early,
+    COUNT(CASE WHEN period = 'late'  THEN 1 END) AS cnt_late
+  FROM tag_split
+  GROUP BY tag_id
+)
+SELECT
+  ta.tag_id,
+  tg.tag_name,
+  ta.avg_early,
+  ta.avg_late,
+  ta.cnt_early,
+  ta.cnt_late,
+  ROUND(((ta.avg_late - ta.avg_early) / NULLIF(ta.avg_early,0)) * 100.0, 2) AS pct_change
+FROM tag_aggregates ta
+JOIN tags tg ON tg.tag_id = ta.tag_id
+WHERE ta.cnt_early >= 3 AND ta.cnt_late >= 3
+  AND ta.avg_late > ta.avg_early  -- improved
+ORDER BY pct_change DESC NULLS LAST;",hard
+"For every label, track how many items have been assigned to it over time and compute a running total based on when items were added.","WITH tag_products AS (
+  SELECT DISTINCT
+    pt.product_tag_tag_id AS tag_id,
+    p.product_id,
+    p.product_created_at::date AS created_date
+  FROM product_tags pt
+  JOIN products p ON p.product_id = pt.product_tag_product_id
+)
+SELECT
+  tp.tag_id,
+  tg.tag_name,
+  tp.created_date,
+  COUNT(*) OVER (
+    PARTITION BY tp.tag_id
+    ORDER BY tp.created_date
+    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+  ) AS cumulative_product_count
+FROM tag_products tp
+JOIN tags tg ON tg.tag_id = tp.tag_id
+ORDER BY tp.tag_id, tp.created_date;",hard
+"For each label, determine which customer comment deviates the most from the label’s usual feedback pattern and show that one comment.","WITH tag_avg AS (
+  SELECT
+    pt.product_tag_tag_id AS tag_id,
+    AVG(r.review_rating)::numeric AS tag_avg_rating
+  FROM product_tags pt
+  JOIN reviews r ON r.review_product_id = pt.product_tag_product_id
+  GROUP BY pt.product_tag_tag_id
+),
+tag_reviews AS (
+  SELECT
+    pt.product_tag_tag_id AS tag_id,
+    r.review_id,
+    r.review_product_id,
+    r.review_user_id,
+    r.review_rating,
+    r.review_comment,
+    r.review_created_at,
+    ta.tag_avg_rating,
+    ABS(r.review_rating - ta.tag_avg_rating) AS abs_dev
+  FROM product_tags pt
+  JOIN reviews r ON r.review_product_id = pt.product_tag_product_id
+  JOIN tag_avg ta ON ta.tag_id = pt.product_tag_tag_id
+)
+SELECT
+  tr.tag_id,
+  tg.tag_name,
+  tr.review_id,
+  tr.review_product_id,
+  p.product_name,
+  tr.review_user_id,
+  u.user_name,
+  tr.review_rating,
+  tr.tag_avg_rating,
+  tr.abs_dev,
+  tr.review_comment,
+  tr.review_created_at
+FROM (
+  SELECT *,
+         ROW_NUMBER() OVER (PARTITION BY tag_id ORDER BY abs_dev DESC, review_created_at DESC) AS rn
+  FROM tag_reviews
+) tr
+JOIN tags tg ON tg.tag_id = tr.tag_id
+LEFT JOIN products p ON p.product_id = tr.review_product_id
+LEFT JOIN users u ON u.user_id = tr.review_user_id
+WHERE tr.rn = 1
+ORDER BY tr.abs_dev DESC;",hard
+"Rank labels based on how many unique sellers their associated items come from, including ties when multiple labels share the same level.","WITH tag_vendor_counts AS (
+  SELECT
+    pt.product_tag_tag_id AS tag_id,
+    COUNT(DISTINCT pv.product_vendor_vendor_id) AS vendor_count
+  FROM product_tags pt
+  JOIN product_vendors pv ON pv.product_vendor_product_id = pt.product_tag_product_id
+  GROUP BY pt.product_tag_tag_id
+)
+SELECT
+  tvc.tag_id,
+  tg.tag_name,
+  tvc.vendor_count,
+  DENSE_RANK() OVER (ORDER BY tvc.vendor_count DESC) AS vendor_rank
+FROM tag_vendor_counts tvc
+JOIN tags tg ON tg.tag_id = tvc.tag_id
+ORDER BY vendor_rank, tvc.vendor_count DESC;",hard

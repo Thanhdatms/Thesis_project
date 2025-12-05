@@ -1,6 +1,5 @@
 from .prompt_template import SQL_RETRIEVER_TEMPLATE, FINAL_ANSWER
 
-
 def sql_retriever_template(related_table, related_question, question):
     """
     Generate the SQL retriever prompt template.

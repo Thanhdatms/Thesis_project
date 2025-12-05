@@ -18,7 +18,6 @@ class Database:
     @classmethod
     async def fetch(cls, query: str):
         start_time = time.time()
-        print(f"Executing query: {query}")
         try:
             if not cls.pool:
                 raise RuntimeError("Database not connected")
@@ -28,5 +27,5 @@ class Database:
                 return result
         except Exception as e:
             print(f"SQL error: {e}")
-            await conn.rollback()
+            print(f"Query: {query}")
             raise e

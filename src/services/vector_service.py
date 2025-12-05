@@ -30,6 +30,24 @@ class QuestionRetriever:
     
 class SchemaRetriever:
     @staticmethod
+    def get_all_schemas():
+        search_client = LLM_connector.AzureAISearchSchemaConnection.get_instance()
+        results = {}
+        schema_docs = search_client.search(search_text="*", top=1000)
+
+        for page in schema_docs.by_page():
+            for doc in page:
+                table_name = doc.get("schema_name")
+                table_description = doc.get("description")
+                table_info = doc.get("schema_info")
+                if table_name and table_info:
+                    results[table_name] = {
+                        "schema": table_info,
+                        "description": table_description
+                    }
+        return results
+    
+    @staticmethod
     def get_related_schemas(question):
         results = {}
         search_client = LLM_connector.AzureAISearchSchemaConnection.get_instance()
@@ -73,12 +91,14 @@ class SQLHandler:
     
     @staticmethod
     async def execute_query(query: str):
-        """
-        Executes SQL asynchronously using the FastAPI app's connection pool.
-        """
         result = await Database.fetch(query)
+
+        if result is None:
+            raise ValueError("Query returned no results.")
+
+        # Convert list of records
         if isinstance(result, list):
             return [dict(r) for r in result]
-        elif result is not None:
-            return dict(result)
-        return None
+
+        # Convert single record
+        return dict(result)

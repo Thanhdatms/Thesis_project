@@ -56,7 +56,6 @@ def get_openai_response(prompt: str) -> str:
             {"role": "user", "content": prompt}
         ]
     )
-    print('OpenAI Response:', response.choices[0].message.content)
     return response.choices[0].message.content
 
 def get_sql_response(prompt: str) -> str:

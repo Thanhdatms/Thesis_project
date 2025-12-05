@@ -1,19 +1,16 @@
-from typing import Dict, List, TypedDict, Annotated
-from fastapi import FastAPI
-from langchain_core.messages import HumanMessage, ToolMessage, AIMessage, SystemMessage
+from typing import List, TypedDict, Annotated
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
-from langgraph.prebuilt import ToolNode, tools_condition
 
 from services.vector_service import SchemaRetriever, QuestionRetriever, SQLHandler
 from services.prompt_function import sql_retriever_template, final_answer_template
 from services.LLM_connector import to_vector, get_openai_response
-from langgraph.checkpoint.memory import InMemorySaver
-
+from langgraph.checkpoint.memory import  MemorySaver
+from langgraph.config import get_stream_writer
 
 from services.prompt_template import ERROR_RESPONSE, REGENERATE_SQL_TEMPLATE
 class AgentState(TypedDict):
-    message: Annotated[list, add_messages]
+    messages: Annotated[list, add_messages]
     user_query: str
 
     query_embedding: List[float]
@@ -27,26 +24,31 @@ class AgentState(TypedDict):
     query_result: str
     final_response: str
     
+    
 def vectorizer(state: AgentState) -> AgentState:
+    writer = get_stream_writer()
+    writer({"progress": "Vecotr questiob"})
     user_query = state.get("user_query")
     query_embedding = to_vector(user_query)
-
+ 
     return {"query_embedding": query_embedding}
 
 def retrieval_knowledge_base(state: AgentState) -> AgentState:
+    writer = get_stream_writer()
+    writer({"progress": "Retrieval knowledge base"})
     related_queries = QuestionRetriever.get_related_question(state.get("user_query"))
     related_schemas = SchemaRetriever.get_related_schemas(state.get("user_query"))
-
     return {"related_queries": related_queries, "related_schemas": related_schemas}
 
 
 def pre_sql_contextual(state: AgentState) -> AgentState:
+    writer = get_stream_writer()
+    writer({"progress": "Retrieval sql template"})
     sql_query = sql_retriever_template(
         related_question=state.get("related_queries"), 
         related_table=state.get("related_schemas"),
         question=state.get("user_query")
     )
-    print('SQL Query Prompt:', sql_query)
     return {"sql_query": sql_query}
 
 def error_handler(state: AgentState) -> AgentState:
@@ -67,38 +69,44 @@ async def sql_verifier(state: AgentState) -> AgentState:
     while count > 0:
         try:
             query = state.get("sql_generation")
-            print(f"Verifying SQL Query: {query}")
+            if not query:
+                raise ValueError("No SQL query is generated.")
+            
             query_results = await SQLHandler.execute_query(query)
             verify_status = True
             break
         except Exception as e:
-            state["execute_error_message"] = ERROR_RESPONSE.format(error_message=str(e))
+            # print(ERROR_RESPONSE.format(error=str(e)))
+            # state["execute_error_message"] = ERROR_RESPONSE.format(error=str(e))
             count -= 1
-
             sql_generation = state['sql_generation']
             related_schema = state['related_schemas']
             question = state['user_query']
-            error_message = state['execute_error_message']
+            error_message = str(e)
             regenerate_prompt = REGENERATE_SQL_TEMPLATE.format(
                 question=question,
                 schema=related_schema,
                 sql_query=sql_generation,
                 error_message=error_message
             )
-            print(regenerate_prompt)
             sql_generation = get_openai_response(regenerate_prompt)
+ 
             state["sql_generation"] = sql_generation
             print(f"Count: {count}")
             if count == 0:
                 verify_status = False
                 state["sql_generation"] = None
-    return {"verify_status": verify_status, "query_result": query_results if verify_status else None}
+    return {
+        "verify_status": verify_status, 
+        "query_result": query_results if verify_status else None
+    }
     
 def post_sql_contextual(state: AgentState) -> AgentState:
     response_prompt = final_answer_template(
         question=state.get("user_query"),
         answer=state.get("query_result")
     )
+    print("Query Result:", state.get("query_result"))
     final_response_content = get_openai_response(response_prompt)
     state["final_response"] = final_response_content
     return {"final_response": final_response_content}
@@ -138,14 +146,11 @@ graph.add_edge("error_handler", END)
 
 graph.set_entry_point("vectorizer")
 
-
 # --- Add memory ---
-memory = InMemorySaver()
-
+memory = MemorySaver()
 
 # Compile
 app = graph.compile(checkpointer=memory)
-
 
 # Export the graph as a PNG image
 graph_viz = app.get_graph()

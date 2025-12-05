@@ -33,17 +33,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/users")
-async def get_users():
-    async with app.state.db_pool.acquire() as conn:
-        rows = await conn.fetch("""SELECT v.vendor_name, p.product_name 
-FROM vendors AS v 
-JOIN product_vendors AS pv 
-    ON v.vendor_id = pv.product_vendor_vendor_id 
-JOIN products AS p 
-    ON pv.product_vendor_product_id = p.product_id;""")
-        return [dict(row) for row in rows]
-
-
 app.include_router(chatbot.router)
 app.include_router(tables.router)

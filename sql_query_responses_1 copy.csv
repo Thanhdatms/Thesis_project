@@ -1,0 +1,980 @@
+question,sql,answer,friendly_response
+"Which products have an average review rating of 8 or higher, and what is their average rating?","SELECT p.product_id,
+       p.product_name,
+       AVG(r.review_rating) AS avg_rating
+FROM products AS p
+JOIN reviews AS r
+    ON r.review_product_id = p.product_id
+GROUP BY p.product_id, p.product_name
+HAVING AVG(r.review_rating) >= 8
+ORDER BY avg_rating DESC;",,
+Which vendors supply more than 5 distinct products?,"SELECT v.vendor_id,
+       v.vendor_name,
+       COUNT(DISTINCT pv.product_vendor_product_id) AS product_count
+FROM vendors AS v
+JOIN product_vendors AS pv
+    ON pv.product_vendor_vendor_id = v.vendor_id
+GROUP BY v.vendor_id, v.vendor_name
+HAVING COUNT(DISTINCT pv.product_vendor_product_id) > 5;",,
+What are the total quantities of each product purchased in delivered orders?,"SELECT p.product_id,
+       p.product_name,
+       SUM(oi.order_item_quantity) AS total_quantity
+FROM order_items AS oi
+JOIN orders AS o
+    ON oi.order_item_order_id = o.order_id
+JOIN products AS p
+    ON oi.order_item_product_id = p.product_id
+WHERE o.order_status = 'delivered'
+GROUP BY p.product_id, p.product_name
+ORDER BY total_quantity DESC;",,
+Which users have placed more than 3 orders that include at least one applied coupon?,"SELECT u.user_id,
+       u.user_name,
+       COUNT(DISTINCT o.order_id) AS coupon_order_count
+FROM users AS u
+JOIN orders AS o
+    ON o.order_user_id = u.user_id
+JOIN order_coupons AS oc
+    ON oc.order_coupon_order_id = o.order_id
+GROUP BY u.user_id, u.user_name
+HAVING COUNT(DISTINCT o.order_id) > 3;",,
+List all active carts containing more than 2 items in total quantity.,"SELECT c.cart_id,
+       c.cart_user_id,
+       SUM(ci.cart_item_quantity) AS total_items
+FROM cart AS c
+JOIN cart_items AS ci
+    ON ci.cart_item_cart_id = c.cart_id
+WHERE c.cart_status = 'active'
+GROUP BY c.cart_id, c.cart_user_id
+HAVING SUM(ci.cart_item_quantity) > 2;",,
+What are the top 5 most-reviewed products created before 2024-01-01?,"SELECT p.product_id,
+       p.product_name,
+       COUNT(r.review_id) AS review_count
+FROM products AS p
+JOIN reviews AS r
+    ON r.review_product_id = p.product_id
+WHERE p.product_created_at < '2024-01-01'
+GROUP BY p.product_id, p.product_name
+ORDER BY review_count DESC
+LIMIT 5;",,
+"For each category, what is the average price of the products assigned to it?","SELECT c.category_id,
+       c.category_name,
+       AVG(p.product_price) AS avg_price
+FROM categories AS c
+JOIN category_products AS cp
+    ON cp.category_product_category_id = c.category_id
+JOIN products AS p
+    ON p.product_id = cp.category_product_product_id
+GROUP BY c.category_id, c.category_name
+ORDER BY c.category_name;",,
+Which shipments are currently in transit and going to addresses in California?,"SELECT s.shipment_id,
+       s.shipment_order_id,
+       a.address_city,
+       a.address_state
+FROM shipments AS s
+JOIN addresses AS a
+    ON s.shipment_address_id = a.address_id
+WHERE s.shipment_status = 'in_transit'
+  AND a.address_state = 'California';",,
+"Which products have active discounts on 2025-01-01, and what are the discount percentages?","SELECT p.product_id,
+       p.product_name,
+       d.discount_percentage
+FROM products AS p
+JOIN product_discounts AS pd
+    ON pd.product_discount_product_id = p.product_id
+JOIN discounts AS d
+    ON d.discount_id = pd.product_discount_discount_id
+WHERE '2025-01-01' BETWEEN d.discount_start_date AND d.discount_end_date;",,
+Which users submitted more than one return request in 2024?,"SELECT u.user_id,
+       u.user_name,
+       COUNT(r.return_id) AS return_count
+FROM users AS u
+JOIN returns AS r
+    ON r.return_user_id = u.user_id
+WHERE r.return_created_at >= '2024-01-01'
+  AND r.return_created_at < '2025-01-01'
+GROUP BY u.user_id, u.user_name
+HAVING COUNT(r.return_id) > 1;",,
+Which products have never received any reviews?,"SELECT p.product_id,
+       p.product_name
+FROM products AS p
+LEFT JOIN reviews AS r
+    ON r.review_product_id = p.product_id
+WHERE r.review_id IS NULL;",,
+What are the top 5 vendors whose products have generated the highest total number of reviews?,"SELECT v.vendor_id,
+       v.vendor_name,
+       COUNT(r.review_id) AS total_reviews
+FROM vendors AS v
+JOIN product_vendors AS pv
+    ON pv.product_vendor_vendor_id = v.vendor_id
+JOIN products AS p
+    ON p.product_id = pv.product_vendor_product_id
+JOIN reviews AS r
+    ON r.review_product_id = p.product_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY total_reviews DESC
+LIMIT 5;",,
+"Which orders had a payment marked as failed, and what payment method was used?","SELECT o.order_id,
+       o.order_user_id,
+       p.payment_method,
+       p.payment_status
+FROM orders AS o
+JOIN payments AS p
+    ON p.payment_order_id = o.order_id
+WHERE p.payment_status = 'failed';",,
+"For each product, show the number of wishlists it appears in.","SELECT p.product_id,
+       p.product_name,
+       COUNT(wi.wishlist_item_id) AS wishlist_appearances
+FROM products AS p
+LEFT JOIN wishlist_items AS wi
+    ON wi.wishlist_item_product_id = p.product_id
+GROUP BY p.product_id, p.product_name
+ORDER BY wishlist_appearances DESC;",,
+List all tags associated with products priced above $100.,"SELECT DISTINCT t.tag_id,
+       t.tag_name
+FROM tags AS t
+JOIN product_tags AS pt
+    ON pt.product_tag_tag_id = t.tag_id
+JOIN products AS p
+    ON p.product_id = pt.product_tag_product_id
+WHERE p.product_price > 100.00;",,
+Which categories contain more than 10 products?,"SELECT c.category_id,
+       c.category_name,
+       COUNT(cp.category_product_product_id) AS product_count
+FROM categories AS c
+JOIN category_products AS cp
+    ON cp.category_product_category_id = c.category_id
+GROUP BY c.category_id, c.category_name
+HAVING COUNT(cp.category_product_product_id) > 10;",,
+What is the total revenue generated from orders created in January 2024?,"SELECT SUM(o.order_total) AS total_revenue
+FROM orders AS o
+WHERE o.order_created_at >= '2024-01-01'
+  AND o.order_created_at < '2024-02-01';",,
+Which users have at least one active cart that contains products with a total quantity greater than 5?,"SELECT DISTINCT u.user_id,
+       u.user_name
+FROM users AS u
+JOIN cart AS c
+    ON c.cart_user_id = u.user_id
+JOIN cart_items AS ci
+    ON ci.cart_item_cart_id = c.cart_id
+WHERE c.cart_status = 'active'
+GROUP BY u.user_id, u.user_name, c.cart_id
+HAVING SUM(ci.cart_item_quantity) > 5;",,
+Which products were added to the system in 2023 and have at least one vendor?,"SELECT DISTINCT p.product_id,
+       p.product_name
+FROM products AS p
+JOIN product_vendors AS pv
+    ON pv.product_vendor_product_id = p.product_id
+WHERE p.product_created_at >= '2023-01-01'
+  AND p.product_created_at < '2024-01-01';",,
+Which orders have shipments that were delivered after 2024-06-01?,"SELECT o.order_id,
+       o.order_user_id,
+       s.shipment_id,
+       s.shipment_updated_at
+FROM orders AS o
+JOIN shipments AS s
+    ON s.shipment_order_id = o.order_id
+WHERE s.shipment_status = 'delivered'
+  AND s.shipment_updated_at > '2024-06-01';",,
+Which users have written more than 5 total product reviews?,"SELECT u.user_id,
+       u.user_name,
+       COUNT(r.review_id) AS review_count
+FROM users AS u
+JOIN reviews AS r
+    ON r.review_user_id = u.user_id
+GROUP BY u.user_id, u.user_name
+HAVING COUNT(r.review_id) > 5
+ORDER BY review_count DESC;",,
+Which products currently have no vendors and no tags associated with them?,"SELECT p.product_id,
+       p.product_name
+FROM products AS p
+LEFT JOIN product_vendors AS pv
+    ON pv.product_vendor_product_id = p.product_id
+LEFT JOIN product_tags AS pt
+    ON pt.product_tag_product_id = p.product_id
+WHERE pv.product_vendor_id IS NULL
+  AND pt.product_tag_id IS NULL;",,
+Which coupons were active on 2024-12-15 and used in at least one order?,"SELECT DISTINCT c.coupon_id,
+       c.coupon_code,
+       c.coupon_discount_percentage
+FROM coupons AS c
+JOIN order_coupons AS oc
+    ON oc.order_coupon_coupon_id = c.coupon_id
+WHERE '2024-12-15' BETWEEN c.coupon_start_date AND c.coupon_end_date;",,
+"For each vendor, show the total number of categories their products belong to.","SELECT v.vendor_id,
+       v.vendor_name,
+       COUNT(DISTINCT cp.category_product_category_id) AS category_count
+FROM vendors AS v
+JOIN product_vendors AS pv
+    ON pv.product_vendor_vendor_id = v.vendor_id
+JOIN category_products AS cp
+    ON cp.category_product_product_id = pv.product_vendor_product_id
+GROUP BY v.vendor_id, v.vendor_name
+ORDER BY category_count DESC;",,
+Which products appear in wishlists created after 2024-05-01?,"SELECT DISTINCT p.product_id,
+       p.product_name
+FROM products AS p
+JOIN wishlist_items AS wi
+    ON wi.wishlist_item_product_id = p.product_id
+JOIN wishlist AS w
+    ON w.wishlist_id = wi.wishlist_item_wishlist_id
+WHERE w.wishlist_created_at > '2024-05-01';",,
+Which orders include more than 3 distinct products?,"SELECT o.order_id,
+       o.order_user_id,
+       COUNT(DISTINCT oi.order_item_product_id) AS product_count
+FROM orders AS o
+JOIN order_items AS oi
+    ON oi.order_item_order_id = o.order_id
+GROUP BY o.order_id, o.order_user_id
+HAVING COUNT(DISTINCT oi.order_item_product_id) > 3;",,
+What is the total value of items purchased per user for delivered orders only?,"SELECT u.user_id,
+       u.user_name,
+       SUM(oi.order_item_price * oi.order_item_quantity) AS total_spent
+FROM users AS u
+JOIN orders AS o
+    ON o.order_user_id = u.user_id
+JOIN order_items AS oi
+    ON oi.order_item_order_id = o.order_id
+WHERE o.order_status = 'delivered'
+GROUP BY u.user_id, u.user_name
+ORDER BY total_spent DESC;",,
+Which shipments are still in the “preparing” status for orders created before 2024-03-01?,"SELECT s.shipment_id,
+       s.shipment_order_id,
+       s.shipment_status
+FROM shipments AS s
+JOIN orders AS o
+    ON s.shipment_order_id = o.order_id
+WHERE s.shipment_status = 'preparing'
+  AND o.order_created_at < '2024-03-01';",,
+List all products that have both tags and at least one review rating below 5.,"SELECT DISTINCT p.product_id,
+       p.product_name
+FROM products AS p
+JOIN product_tags AS pt
+    ON pt.product_tag_product_id = p.product_id
+JOIN reviews AS r
+    ON r.review_product_id = p.product_id
+WHERE r.review_rating < 5;",,
+Which users have made a return request that was later approved?,"SELECT DISTINCT u.user_id,
+       u.user_name
+FROM users AS u
+JOIN returns AS r
+    ON r.return_user_id = u.user_id
+WHERE r.return_status = 'approved';",,
+Which products received reviews in 2024 with an average rating greater than 7?,"SELECT p.product_id,
+       p.product_name,
+       AVG(r.review_rating) AS avg_rating
+FROM products AS p
+JOIN reviews AS r
+    ON r.review_product_id = p.product_id
+WHERE r.review_created_at >= '2024-01-01'
+  AND r.review_created_at < '2025-01-01'
+GROUP BY p.product_id, p.product_name
+HAVING AVG(r.review_rating) > 7
+ORDER BY avg_rating DESC;",,
+Which categories include products that have never been added to any wishlist?,"SELECT DISTINCT c.category_id,
+       c.category_name
+FROM categories AS c
+JOIN category_products AS cp
+    ON cp.category_product_category_id = c.category_id
+JOIN products AS p
+    ON p.product_id = cp.category_product_product_id
+LEFT JOIN wishlist_items AS wi
+    ON wi.wishlist_item_product_id = p.product_id
+WHERE wi.wishlist_item_id IS NULL;",,
+Which users placed orders that used more than one coupon?,"SELECT u.user_id,
+       u.user_name,
+       o.order_id,
+       COUNT(oc.order_coupon_id) AS coupon_count
+FROM users AS u
+JOIN orders AS o
+    ON o.order_user_id = u.user_id
+JOIN order_coupons AS oc
+    ON oc.order_coupon_order_id = o.order_id
+GROUP BY u.user_id, u.user_name, o.order_id
+HAVING COUNT(oc.order_coupon_id) > 1;",,
+Which vendors supply products that have received no reviews at all?,"SELECT DISTINCT v.vendor_id,
+       v.vendor_name
+FROM vendors AS v
+JOIN product_vendors AS pv
+    ON pv.product_vendor_vendor_id = v.vendor_id
+JOIN products AS p
+    ON p.product_id = pv.product_vendor_product_id
+LEFT JOIN reviews AS r
+    ON r.review_product_id = p.product_id
+WHERE r.review_id IS NULL;",,
+Which tags are used on more than 8 products?,"SELECT t.tag_id,
+       t.tag_name,
+       COUNT(pt.product_tag_product_id) AS product_count
+FROM tags AS t
+JOIN product_tags AS pt
+    ON pt.product_tag_tag_id = t.tag_id
+GROUP BY t.tag_id, t.tag_name
+HAVING COUNT(pt.product_tag_product_id) > 8
+ORDER BY product_count DESC;",,
+Which orders have at least one item priced above $200?,"SELECT DISTINCT o.order_id,
+       o.order_user_id
+FROM orders AS o
+JOIN order_items AS oi
+    ON oi.order_item_order_id = o.order_id
+WHERE oi.order_item_price > 200.00;",,
+Which users have saved at least 3 unique products across all their wishlists?,"SELECT u.user_id,
+       u.user_name,
+       COUNT(DISTINCT wi.wishlist_item_product_id) AS unique_products
+FROM users AS u
+JOIN wishlist AS w
+    ON w.wishlist_user_id = u.user_id
+JOIN wishlist_items AS wi
+    ON wi.wishlist_item_wishlist_id = w.wishlist_id
+GROUP BY u.user_id, u.user_name
+HAVING COUNT(DISTINCT wi.wishlist_item_product_id) >= 3;",,
+Which shipments were delivered to ZIP codes starting with '90'?,"SELECT s.shipment_id,
+       s.shipment_order_id,
+       a.address_zip
+FROM shipments AS s
+JOIN addresses AS a
+    ON s.shipment_address_id = a.address_id
+WHERE s.shipment_status = 'delivered'
+  AND a.address_zip LIKE '90%';",,
+Which products have active discounts on 2024-11-01 and also appear in at least one category?,"SELECT DISTINCT p.product_id,
+       p.product_name
+FROM products AS p
+JOIN product_discounts AS pd
+    ON pd.product_discount_product_id = p.product_id
+JOIN discounts AS d
+    ON d.discount_id = pd.product_discount_discount_id
+JOIN category_products AS cp
+    ON cp.category_product_product_id = p.product_id
+WHERE '2024-11-01' BETWEEN d.discount_start_date AND d.discount_end_date;",,
+Which users have had at least one payment transaction fail for their orders?,"SELECT DISTINCT u.user_id,
+       u.user_name
+FROM users AS u
+JOIN orders AS o
+    ON o.order_user_id = u.user_id
+JOIN payments AS p
+    ON p.payment_order_id = o.order_id
+JOIN transactions AS t
+    ON t.transaction_payment_id = p.payment_id
+WHERE t.transaction_status = 'failed';",,
+"Which products received at least one review with a rating of 10, and how many perfect-score reviews did each receive?","SELECT p.product_id,
+       p.product_name,
+       COUNT(r.review_id) AS perfect_reviews
+FROM products AS p
+JOIN reviews AS r
+    ON r.review_product_id = p.product_id
+WHERE r.review_rating = 10
+GROUP BY p.product_id, p.product_name
+ORDER BY perfect_reviews DESC;",,
+Which users placed orders totaling more than $500 in March 2024?,"SELECT u.user_id,
+       u.user_name,
+       SUM(o.order_total) AS total_spent
+FROM users AS u
+JOIN orders AS o
+    ON o.order_user_id = u.user_id
+WHERE o.order_created_at >= '2024-03-01'
+  AND o.order_created_at < '2024-04-01'
+GROUP BY u.user_id, u.user_name
+HAVING SUM(o.order_total) > 500.00
+ORDER BY total_spent DESC;",,
+Which products were added in 2024 and have been included in at least one delivered order?,"SELECT DISTINCT p.product_id,
+       p.product_name
+FROM products AS p
+JOIN order_items AS oi
+    ON oi.order_item_product_id = p.product_id
+JOIN orders AS o
+    ON o.order_id = oi.order_item_order_id
+WHERE p.product_created_at >= '2024-01-01'
+  AND p.product_created_at < '2025-01-01'
+  AND o.order_status = 'delivered';",,
+Which categories have products supplied by more than 3 distinct vendors?,"SELECT c.category_id,
+       c.category_name,
+       COUNT(DISTINCT pv.product_vendor_vendor_id) AS vendor_count
+FROM categories AS c
+JOIN category_products AS cp
+    ON cp.category_product_category_id = c.category_id
+JOIN product_vendors AS pv
+    ON pv.product_vendor_product_id = cp.category_product_product_id
+GROUP BY c.category_id, c.category_name
+HAVING COUNT(DISTINCT pv.product_vendor_vendor_id) > 3;",,
+Which vendors supplied products that appear in more than 5 wishlists?,"SELECT v.vendor_id,
+       v.vendor_name,
+       COUNT(DISTINCT wi.wishlist_item_id) AS wishlist_mentions
+FROM vendors AS v
+JOIN product_vendors AS pv
+    ON pv.product_vendor_vendor_id = v.vendor_id
+JOIN products AS p
+    ON p.product_id = pv.product_vendor_product_id
+JOIN wishlist_items AS wi
+    ON wi.wishlist_item_product_id = p.product_id
+GROUP BY v.vendor_id, v.vendor_name
+HAVING COUNT(DISTINCT wi.wishlist_item_id) > 5;",,
+Which products have both active discounts on 2024-10-15 and at least one review with a rating below 4?,"SELECT DISTINCT p.product_id,
+       p.product_name
+FROM products AS p
+JOIN product_discounts AS pd
+    ON pd.product_discount_product_id = p.product_id
+JOIN discounts AS d
+    ON d.discount_id = pd.product_discount_discount_id
+JOIN reviews AS r
+    ON r.review_product_id = p.product_id
+WHERE '2024-10-15' BETWEEN d.discount_start_date AND d.discount_end_date
+  AND r.review_rating < 4;",,
+Which shipments are linked to orders using at least one coupon?,"SELECT DISTINCT s.shipment_id,
+       s.shipment_order_id,
+       s.shipment_status
+FROM shipments AS s
+JOIN order_coupons AS oc
+    ON oc.order_coupon_order_id = s.shipment_order_id;",,
+"Which users created wishlists that include products tagged with ""electronics""?","SELECT DISTINCT u.user_id,
+       u.user_name
+FROM users AS u
+JOIN wishlist AS w
+    ON w.wishlist_user_id = u.user_id
+JOIN wishlist_items AS wi
+    ON wi.wishlist_item_wishlist_id = w.wishlist_id
+JOIN product_tags AS pt
+    ON pt.product_tag_product_id = wi.wishlist_item_product_id
+JOIN tags AS t
+    ON t.tag_id = pt.product_tag_tag_id
+WHERE t.tag_name = 'electronics';",,
+Which payments were completed for orders created before 2024-02-01?,"SELECT p.payment_id,
+       p.payment_order_id,
+       p.payment_method,
+       p.payment_status
+FROM payments AS p
+JOIN orders AS o
+    ON o.order_id = p.payment_order_id
+WHERE p.payment_status = 'completed'
+  AND o.order_created_at < '2024-02-01';",,
+Which orders include products belonging to the category with category_id = 2?,"SELECT DISTINCT o.order_id,
+       o.order_user_id
+FROM orders AS o
+JOIN order_items AS oi
+    ON oi.order_item_order_id = o.order_id
+JOIN category_products AS cp
+    ON cp.category_product_product_id = oi.order_item_product_id
+WHERE cp.category_product_category_id = 2;",,
+Which products have been purchased in quantities totaling more than 20 units across all orders?,"SELECT p.product_id,
+       p.product_name,
+       SUM(oi.order_item_quantity) AS total_quantity
+FROM products AS p
+JOIN order_items AS oi
+    ON oi.order_item_product_id = p.product_id
+GROUP BY p.product_id, p.product_name
+HAVING SUM(oi.order_item_quantity) > 20
+ORDER BY total_quantity DESC;",,
+Which users have both written reviews and placed at least one order?,"SELECT DISTINCT u.user_id,
+       u.user_name
+FROM users AS u
+JOIN reviews AS r
+    ON r.review_user_id = u.user_id
+JOIN orders AS o
+    ON o.order_user_id = u.user_id;",,
+Which products appear in carts with a total quantity greater than 3 for any single cart?,"SELECT DISTINCT p.product_id,
+       p.product_name
+FROM products AS p
+JOIN cart_items AS ci
+    ON ci.cart_item_product_id = p.product_id
+JOIN cart AS c
+    ON c.cart_id = ci.cart_item_cart_id
+GROUP BY p.product_id, p.product_name, c.cart_id
+HAVING SUM(ci.cart_item_quantity) > 3;",,
+Which vendors supply products that have been returned by users at least once?,"SELECT DISTINCT v.vendor_id,
+       v.vendor_name
+FROM vendors AS v
+JOIN product_vendors AS pv
+    ON pv.product_vendor_vendor_id = v.vendor_id
+JOIN order_items AS oi
+    ON oi.order_item_product_id = pv.product_vendor_product_id
+JOIN returns AS r
+    ON r.return_order_id = oi.order_item_order_id;",,
+Which categories contain products that have received an average review rating below 6?,"SELECT DISTINCT c.category_id,
+       c.category_name
+FROM categories AS c
+JOIN category_products AS cp
+    ON cp.category_product_category_id = c.category_id
+JOIN products AS p
+    ON p.product_id = cp.category_product_product_id
+JOIN reviews AS r
+    ON r.review_product_id = p.product_id
+GROUP BY c.category_id, c.category_name, p.product_id
+HAVING AVG(r.review_rating) < 6;",,
+Which orders have a shipment that is still not delivered?,"SELECT DISTINCT o.order_id,
+       o.order_user_id,
+       s.shipment_status
+FROM orders AS o
+JOIN shipments AS s
+    ON s.shipment_order_id = o.order_id
+WHERE s.shipment_status <> 'delivered';",,
+Which products have been tagged with at least three different tags?,"SELECT p.product_id,
+       p.product_name,
+       COUNT(pt.product_tag_tag_id) AS tag_count
+FROM products AS p
+JOIN product_tags AS pt
+    ON pt.product_tag_product_id = p.product_id
+GROUP BY p.product_id, p.product_name
+HAVING COUNT(pt.product_tag_tag_id) >= 3;",,
+Which users have multiple saved addresses in the system?,"SELECT u.user_id,
+       u.user_name,
+       COUNT(a.address_id) AS address_count
+FROM users AS u
+JOIN addresses AS a
+    ON a.address_user_id = u.user_id
+GROUP BY u.user_id, u.user_name
+HAVING COUNT(a.address_id) > 1;",,
+Which coupons were never applied to any order?,"SELECT c.coupon_id,
+       c.coupon_code
+FROM coupons AS c
+LEFT JOIN order_coupons AS oc
+    ON oc.order_coupon_coupon_id = c.coupon_id
+WHERE oc.order_coupon_id IS NULL;",,
+Which orders include items from vendors with vendor_id = 5?,"SELECT DISTINCT o.order_id,
+       o.order_user_id
+FROM orders AS o
+JOIN order_items AS oi
+    ON oi.order_item_order_id = o.order_id
+JOIN product_vendors AS pv
+    ON pv.product_vendor_product_id = oi.order_item_product_id
+WHERE pv.product_vendor_vendor_id = 5;",,
+Which products have received reviews from more than 3 distinct users?,"SELECT p.product_id,
+       p.product_name,
+       COUNT(DISTINCT r.review_user_id) AS distinct_reviewers
+FROM products AS p
+JOIN reviews AS r
+    ON r.review_product_id = p.product_id
+GROUP BY p.product_id, p.product_name
+HAVING COUNT(DISTINCT r.review_user_id) > 3;",,
+Which vendors added products that were created before 2023-01-01?,"SELECT DISTINCT v.vendor_id,
+       v.vendor_name
+FROM vendors AS v
+JOIN product_vendors AS pv
+    ON pv.product_vendor_vendor_id = v.vendor_id
+JOIN products AS p
+    ON p.product_id = pv.product_vendor_product_id
+WHERE p.product_created_at < '2023-01-01';",,
+Which orders include at least one item with a quantity of 5 or more?,"SELECT DISTINCT o.order_id,
+       o.order_user_id
+FROM orders AS o
+JOIN order_items AS oi
+    ON oi.order_item_order_id = o.order_id
+WHERE oi.order_item_quantity >= 5;",,
+Which users wrote reviews for products that also appear in their wishlists?,"SELECT DISTINCT u.user_id,
+       u.user_name
+FROM users AS u
+JOIN reviews AS r
+    ON r.review_user_id = u.user_id
+JOIN wishlist AS w
+    ON w.wishlist_user_id = u.user_id
+JOIN wishlist_items AS wi
+    ON wi.wishlist_item_wishlist_id = w.wishlist_id
+WHERE wi.wishlist_item_product_id = r.review_product_id;",,
+Which products appear in both carts and wishlists?,"SELECT DISTINCT p.product_id,
+       p.product_name
+FROM products AS p
+JOIN cart_items AS ci
+    ON ci.cart_item_product_id = p.product_id
+JOIN wishlist_items AS wi
+    ON wi.wishlist_item_product_id = p.product_id;",,
+Which users placed orders that were later returned (any return status)?,"SELECT DISTINCT u.user_id,
+       u.user_name
+FROM users AS u
+JOIN orders AS o
+    ON o.order_user_id = u.user_id
+JOIN returns AS r
+    ON r.return_order_id = o.order_id;",,
+Which shipments were created on or after 2024-01-01 for orders with totals above $250?,"SELECT s.shipment_id,
+       s.shipment_order_id,
+       s.shipment_created_at
+FROM shipments AS s
+JOIN orders AS o
+    ON o.order_id = s.shipment_order_id
+WHERE s.shipment_created_at >= '2024-01-01'
+  AND o.order_total > 250.00;",,
+Which products have been discounted by more than one distinct discount campaign?,"SELECT p.product_id,
+       p.product_name,
+       COUNT(DISTINCT pd.product_discount_discount_id) AS discount_count
+FROM products AS p
+JOIN product_discounts AS pd
+    ON pd.product_discount_product_id = p.product_id
+GROUP BY p.product_id, p.product_name
+HAVING COUNT(DISTINCT pd.product_discount_discount_id) > 1;",,
+Which categories contain products priced above $500?,"SELECT DISTINCT c.category_id,
+       c.category_name
+FROM categories AS c
+JOIN category_products AS cp
+    ON cp.category_product_category_id = c.category_id
+JOIN products AS p
+    ON p.product_id = cp.category_product_product_id
+WHERE p.product_price > 500.00;",,
+Which users have completed payments using a credit card?,"SELECT DISTINCT u.user_id,
+       u.user_name
+FROM users AS u
+JOIN orders AS o
+    ON o.order_user_id = u.user_id
+JOIN payments AS p
+    ON p.payment_order_id = o.order_id
+WHERE p.payment_status = 'completed'
+  AND p.payment_method = 'credit_card';",,
+Which users have carts containing more than 2 distinct products?,"SELECT u.user_id,
+       u.user_name,
+       COUNT(DISTINCT ci.cart_item_product_id) AS distinct_products
+FROM users AS u
+JOIN cart AS c
+    ON c.cart_user_id = u.user_id
+JOIN cart_items AS ci
+    ON ci.cart_item_cart_id = c.cart_id
+GROUP BY u.user_id, u.user_name
+HAVING COUNT(DISTINCT ci.cart_item_product_id) > 2;",,
+Which products belong to more than one category?,"SELECT p.product_id,
+       p.product_name,
+       COUNT(cp.category_product_category_id) AS category_count
+FROM products AS p
+JOIN category_products AS cp
+    ON cp.category_product_product_id = p.product_id
+GROUP BY p.product_id, p.product_name
+HAVING COUNT(cp.category_product_category_id) > 1;",,
+"Which users placed orders that included products tagged as ""premium""?","SELECT DISTINCT u.user_id,
+       u.user_name
+FROM users AS u
+JOIN orders AS o
+    ON o.order_user_id = u.user_id
+JOIN order_items AS oi
+    ON oi.order_item_order_id = o.order_id
+JOIN product_tags AS pt
+    ON pt.product_tag_product_id = oi.order_item_product_id
+JOIN tags AS t
+    ON t.tag_id = pt.product_tag_tag_id
+WHERE t.tag_name = 'premium';",,
+Which products were reviewed and also appear in orders that applied a coupon?,"SELECT DISTINCT p.product_id,
+       p.product_name
+FROM products AS p
+JOIN reviews AS r
+    ON r.review_product_id = p.product_id
+JOIN order_items AS oi
+    ON oi.order_item_product_id = p.product_id
+JOIN order_coupons AS oc
+    ON oc.order_coupon_order_id = oi.order_item_order_id;",,
+Which vendors supplied products included in delivered shipments?,"SELECT DISTINCT v.vendor_id,
+       v.vendor_name
+FROM vendors AS v
+JOIN product_vendors AS pv
+    ON pv.product_vendor_vendor_id = v.vendor_id
+JOIN order_items AS oi
+    ON oi.order_item_product_id = pv.product_vendor_product_id
+JOIN shipments AS s
+    ON s.shipment_order_id = oi.order_item_order_id
+WHERE s.shipment_status = 'delivered';",,
+Which users created wishlists that contain at least one product priced under $20?,"SELECT DISTINCT u.user_id,
+       u.user_name
+FROM users AS u
+JOIN wishlist AS w
+    ON w.wishlist_user_id = u.user_id
+JOIN wishlist_items AS wi
+    ON wi.wishlist_item_wishlist_id = w.wishlist_id
+JOIN products AS p
+    ON p.product_id = wi.wishlist_item_product_id
+WHERE p.product_price < 20.00;",,
+Which orders include products that received an average rating above 8?,"SELECT DISTINCT o.order_id,
+       o.order_user_id
+FROM orders AS o
+JOIN order_items AS oi
+    ON oi.order_item_order_id = o.order_id
+JOIN (
+    SELECT r.review_product_id,
+           AVG(r.review_rating) AS avg_rating
+    FROM reviews AS r
+    GROUP BY r.review_product_id
+) AS ratings
+    ON ratings.review_product_id = oi.order_item_product_id
+WHERE ratings.avg_rating > 8;",,
+Which shipments were delivered to users who have written at least one review?,"SELECT DISTINCT s.shipment_id,
+       s.shipment_order_id
+FROM shipments AS s
+JOIN orders AS o
+    ON o.order_id = s.shipment_order_id
+JOIN users AS u
+    ON u.user_id = o.order_user_id
+JOIN reviews AS r
+    ON r.review_user_id = u.user_id
+WHERE s.shipment_status = 'delivered';",,
+Which products have been discounted during 2024 but never appeared in any wishlist?,"SELECT DISTINCT p.product_id,
+       p.product_name
+FROM products AS p
+JOIN product_discounts AS pd
+    ON pd.product_discount_product_id = p.product_id
+JOIN discounts AS d
+    ON d.discount_id = pd.product_discount_discount_id
+LEFT JOIN wishlist_items AS wi
+    ON wi.wishlist_item_product_id = p.product_id
+WHERE d.discount_start_date < '2025-01-01'
+  AND d.discount_end_date >= '2024-01-01'
+  AND wi.wishlist_item_id IS NULL;",,
+"Which payments used ""paypal"" and correspond to orders with total amounts above $150?","SELECT p.payment_id,
+       p.payment_order_id,
+       p.payment_status
+FROM payments AS p
+JOIN orders AS o
+    ON o.order_id = p.payment_order_id
+WHERE p.payment_method = 'paypal'
+  AND o.order_total > 150.00;",,
+Which products have never received any review?,"SELECT p.product_id,
+       p.product_name
+FROM products AS p
+LEFT JOIN reviews AS r
+    ON r.review_product_id = p.product_id
+WHERE r.review_id IS NULL;",,
+Which users placed more than 3 orders during 2023?,"SELECT u.user_id,
+       u.user_name,
+       COUNT(o.order_id) AS order_count
+FROM users AS u
+JOIN orders AS o
+    ON o.order_user_id = u.user_id
+WHERE o.order_created_at >= '2023-01-01'
+  AND o.order_created_at < '2024-01-01'
+GROUP BY u.user_id, u.user_name
+HAVING COUNT(o.order_id) > 3;",,
+Which categories contain products that have received at least one rating of 10?,"SELECT DISTINCT c.category_id,
+       c.category_name
+FROM categories AS c
+JOIN category_products AS cp
+    ON cp.category_product_category_id = c.category_id
+JOIN reviews AS r
+    ON r.review_product_id = cp.category_product_product_id
+WHERE r.review_rating = 10;",,
+Which products appear in both carts and wishlists?,"SELECT DISTINCT p.product_id,
+       p.product_name
+FROM products AS p
+JOIN cart_items AS ci
+    ON ci.cart_item_product_id = p.product_id
+JOIN wishlist_items AS wi
+    ON wi.wishlist_item_product_id = p.product_id;",,
+Which vendors supply products that have been included in cancelled orders?,"SELECT DISTINCT v.vendor_id,
+       v.vendor_name
+FROM vendors AS v
+JOIN product_vendors AS pv
+    ON pv.product_vendor_vendor_id = v.vendor_id
+JOIN order_items AS oi
+    ON oi.order_item_product_id = pv.product_vendor_product_id
+JOIN orders AS o
+    ON o.order_id = oi.order_item_order_id
+WHERE o.order_status = 'cancelled';",,
+Which users have pending returns for orders they placed?,"SELECT DISTINCT u.user_id,
+       u.user_name
+FROM users AS u
+JOIN returns AS r
+    ON r.return_user_id = u.user_id
+WHERE r.return_status = 'pending';",,
+Which coupons were applied to orders that also included discounted products?,"SELECT DISTINCT c.coupon_id,
+       c.coupon_code
+FROM coupons AS c
+JOIN order_coupons AS oc
+    ON oc.order_coupon_coupon_id = c.coupon_id
+JOIN orders AS o
+    ON o.order_id = oc.order_coupon_order_id
+JOIN order_items AS oi
+    ON oi.order_item_order_id = o.order_id
+JOIN product_discounts AS pd
+    ON pd.product_discount_product_id = oi.order_item_product_id;",,
+Which shipments were sent to addresses in California?,"SELECT s.shipment_id,
+       s.shipment_order_id,
+       s.shipment_status
+FROM shipments AS s
+JOIN addresses AS a
+    ON a.address_id = s.shipment_address_id
+WHERE a.address_state = 'California';",,
+Which products are tagged with both “new” and “popular”?,"SELECT p.product_id,
+       p.product_name
+FROM products AS p
+JOIN product_tags AS pt1
+    ON pt1.product_tag_product_id = p.product_id
+JOIN tags AS t1
+    ON t1.tag_id = pt1.product_tag_tag_id
+JOIN product_tags AS pt2
+    ON pt2.product_tag_product_id = p.product_id
+JOIN tags AS t2
+    ON t2.tag_id = pt2.product_tag_tag_id
+WHERE t1.tag_name = 'new'
+  AND t2.tag_name = 'popular';",,
+Which users have completed payments for orders that include more than 5 items total?,"SELECT DISTINCT u.user_id,
+       u.user_name
+FROM users AS u
+JOIN orders AS o
+    ON o.order_user_id = u.user_id
+JOIN payments AS p
+    ON p.payment_order_id = o.order_id
+JOIN order_items AS oi
+    ON oi.order_item_order_id = o.order_id
+GROUP BY u.user_id, u.user_name, o.order_id, p.payment_status
+HAVING p.payment_status = 'completed'
+   AND SUM(oi.order_item_quantity) > 5;",,
+"Which products have the largest increase in average review rating between the first half of 2023 and the second half of 2023?
+(Only include products reviewed in both periods.)","WITH ratings AS (
+    SELECT
+        r.review_product_id,
+        CASE 
+            WHEN r.review_created_at < '2023-07-01' THEN 'H1'
+            ELSE 'H2'
+        END AS half_year,
+        AVG(r.review_rating) AS avg_rating
+    FROM reviews AS r
+    WHERE r.review_created_at >= '2023-01-01'
+      AND r.review_created_at < '2024-01-01'
+    GROUP BY r.review_product_id, half_year
+),
+pivot AS (
+    SELECT
+        r1.review_product_id,
+        r1.avg_rating AS h1_rating,
+        r2.avg_rating AS h2_rating,
+        (r2.avg_rating - r1.avg_rating) AS diff
+    FROM ratings r1
+    JOIN ratings r2
+        ON r1.review_product_id = r2.review_product_id
+       AND r1.half_year = 'H1'
+       AND r2.half_year = 'H2'
+)
+SELECT p.product_id, p.product_name, diff
+FROM pivot
+JOIN products p ON p.product_id = pivot.review_product_id
+ORDER BY diff DESC;",,
+"For each user, find the highest-priced product they ever purchased, using DISTINCT ON and window ordering.","SELECT DISTINCT ON (u.user_id)
+    u.user_id,
+    u.user_name,
+    p.product_id,
+    p.product_name,
+    oi.order_item_price
+FROM users u
+JOIN orders o ON o.order_user_id = u.user_id
+JOIN order_items oi ON oi.order_item_order_id = o.order_id
+JOIN products p ON p.product_id = oi.order_item_product_id
+ORDER BY u.user_id, oi.order_item_price DESC;",,
+"Find the top 5 vendors whose supplied products generated the highest total ordered revenue, including quantity × price calculations, using window functions.","WITH vendor_revenue AS (
+    SELECT
+        v.vendor_id,
+        v.vendor_name,
+        SUM(oi.order_item_quantity * oi.order_item_price) AS total_revenue
+    FROM vendors v
+    JOIN product_vendors pv ON pv.product_vendor_vendor_id = v.vendor_id
+    JOIN order_items oi ON oi.order_item_product_id = pv.product_vendor_product_id
+    GROUP BY v.vendor_id, v.vendor_name
+)
+SELECT *
+FROM vendor_revenue
+ORDER BY total_revenue DESC
+LIMIT 5;",,
+Which users have placed orders whose shipping time (shipment_created_at ? shipment_delivered) is above the 90th percentile of all shipping durations?,"WITH durations AS (
+    SELECT 
+        s.shipment_id,
+        s.shipment_order_id,
+        EXTRACT(EPOCH FROM (s.shipment_updated_at - s.shipment_created_at)) AS seconds
+    FROM shipments s
+    WHERE s.shipment_status = 'delivered'
+),
+threshold AS (
+    SELECT percentile_cont(0.9) WITHIN GROUP (ORDER BY seconds) AS p90
+    FROM durations
+)
+SELECT DISTINCT u.user_id, u.user_name
+FROM durations d
+JOIN threshold t ON d.seconds > t.p90
+JOIN orders o ON o.order_id = d.shipment_order_id
+JOIN users u ON u.user_id = o.order_user_id;",,
+"Find the average product price per category, but only include categories where at least one product has been ordered more than 50 times in total.","WITH order_totals AS (
+    SELECT 
+        oi.order_item_product_id AS product_id,
+        SUM(oi.order_item_quantity) AS total_qty
+    FROM order_items oi
+    GROUP BY oi.order_item_product_id
+),
+qualified_categories AS (
+    SELECT DISTINCT cp.category_product_category_id AS category_id
+    FROM category_products cp
+    JOIN order_totals ot ON ot.product_id = cp.category_product_product_id
+    WHERE ot.total_qty > 50
+)
+SELECT 
+    c.category_id,
+    c.category_name,
+    AVG(p.product_price) AS avg_price
+FROM qualified_categories qc
+JOIN categories c ON c.category_id = qc.category_id
+JOIN category_products cp ON cp.category_product_category_id = c.category_id
+JOIN products p ON p.product_id = cp.category_product_product_id
+GROUP BY c.category_id, c.category_name;",,
+Identify products whose price ranks in the top 10% among all products in the same category (using window functions and percentiles).,"WITH cat_prices AS (
+    SELECT
+        p.product_id,
+        p.product_name,
+        cp.category_product_category_id AS category_id,
+        p.product_price,
+        percentile_cont(0.9) WITHIN GROUP (ORDER BY p.product_price)
+            OVER (PARTITION BY cp.category_product_category_id) AS p90
+    FROM products p
+    JOIN category_products cp ON cp.category_product_product_id = p.product_id
+)
+SELECT product_id, product_name, category_id, product_price
+FROM cat_prices
+WHERE product_price >= p90;",,
+"Which users have made at least one completed payment AND also have a pending return, using correlated subqueries?","SELECT u.user_id, u.user_name
+FROM users u
+WHERE EXISTS (
+    SELECT 1
+    FROM orders o
+    JOIN payments p ON p.payment_order_id = o.order_id
+    WHERE o.order_user_id = u.user_id
+      AND p.payment_status = 'completed'
+)
+AND EXISTS (
+    SELECT 1
+    FROM returns r
+    WHERE r.return_user_id = u.user_id
+      AND r.return_status = 'pending'
+);",,
+"Find products ordered by users who also reviewed those same products, and compute the correlation between order quantity and review rating per product. (Uses corr() aggregate.)","SELECT
+    p.product_id,
+    p.product_name,
+    corr(oi.order_item_quantity, r.review_rating) AS quantity_rating_corr
+FROM products p
+JOIN order_items oi ON oi.order_item_product_id = p.product_id
+JOIN orders o ON o.order_id = oi.order_item_order_id
+JOIN reviews r 
+    ON r.review_product_id = p.product_id
+   AND r.review_user_id = o.order_user_id
+GROUP BY p.product_id, p.product_name;",,
+"Determine the lifetime revenue generated per user, ranking users by revenue using a window ranking function, counting only orders with at least one shipped shipment.","WITH shipped_orders AS (
+    SELECT DISTINCT o.order_id
+    FROM orders o
+    JOIN shipments s ON s.shipment_order_id = o.order_id
+    WHERE s.shipment_status = 'delivered'
+),
+user_revenue AS (
+    SELECT 
+        u.user_id,
+        u.user_name,
+        SUM(o.order_total) AS revenue
+    FROM users u
+    JOIN orders o ON o.order_user_id = u.user_id
+    WHERE o.order_id IN (SELECT order_id FROM shipped_orders)
+    GROUP BY u.user_id, u.user_name
+)
+SELECT
+    user_id,
+    user_name,
+    revenue,
+    RANK() OVER (ORDER BY revenue DESC) AS revenue_rank
+FROM user_revenue
+ORDER BY revenue_rank;",,
+Identify all products whose current price is above the average discounted price they had during any active discount period (computing discounted price inside SQL).,"WITH discounted_prices AS (
+    SELECT
+        p.product_id,
+        p.product_price * (1 - d.discount_percentage / 100.0) AS discounted_price
+    FROM products p
+    JOIN product_discounts pd ON pd.product_discount_product_id = p.product_id
+    JOIN discounts d ON d.discount_id = pd.product_discount_discount_id
+)
+SELECT 
+    p.product_id,
+    p.product_name,
+    p.product_price
+FROM products p
+JOIN discounted_prices dp ON dp.product_id = p.product_id
+GROUP BY p.product_id, p.product_name, p.product_price
+HAVING p.product_price > AVG(dp.discounted_price);",,

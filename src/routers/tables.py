@@ -29,7 +29,7 @@ async def get_list_tables(request: Request):
             
             return JSONResponse(
                 status_code=200,
-                content={"tables": tables}
+                content={"data": tables}
             )
         
     except Exception as e:
