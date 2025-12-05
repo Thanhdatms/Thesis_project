@@ -170,3 +170,71 @@ STRICT RULES
 
 Now generate the questions and PostgreSQL answers.
 """
+ROUTER_TEMPLATE = """
+You are a Data Retrieval Router for an E-commerce platform.
+
+Your task is to analyze the user’s question and decide whether the answer must be retrieved from:
+1. Structured data (product database, sales DB)
+2. Unstructured data (financial reports, documents)
+3. Both sources
+
+OUTPUT FORMAT (MANDATORY):
+{
+  "route": "STRUCTURED_DATA" | "UNSTRUCTURED_DATA" | "BOTH",
+  "reason": "short explanation why this route was selected"
+}
+
+DEFINITIONS:
+- STRUCTURED_DATA:
+  Use this when the question requires information from product DB:
+  - price, stock, availability  
+  - product features stored in DB  
+  - SKUs, inventory, sales numbers  
+  - order status, real-time product data  
+
+- UNSTRUCTURED_DATA:
+  Use this when the question relies on text documents:
+  - financial reports (profit, revenue, cost, margins)  
+  - PDF/Word/Docs business documentation  
+  - audit reports, contracts, manuals  
+
+- BOTH:
+  Use this when the question needs information from both:
+  - When identifying or locating a product in DB AND  
+    using financial data from reports  
+  - Questions combining product metadata + financial insights  
+
+RULES:
+- Only produce the JSON object.
+- Do NOT answer the question itself.
+EXAMPLE
+User : “What is the stock of Product A?”
+response
+{
+  "route": "STRUCTURED_DATA",
+  "reason": "The question asks for stock levels stored in the product database."
+}
+User: “Show me the revenue trend for 2023.”
+response
+{
+  "route": "UNSTRUCTURED_DATA",
+  "reason": "Revenue trends come from financial reports."
+}
+User: “What is the profit of Product A?”
+response
+{
+  "route": "BOTH",
+  "reason": "Profit requires product identification from the database and financial results from reports."
+}
+
+QUESTION: {question}
+"""
+
+SUMMARY_TEMPLATE = """
+Based on the json response please summary the key feature:
+
+Data:{json_data}
+
+Only give me summary not any else
+"""
+

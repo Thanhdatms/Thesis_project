@@ -2,13 +2,21 @@ import re
 
 import asyncpg
 from fastapi import FastAPI
+import re
+
+import asyncpg
+from fastapi import FastAPI
 from services import LLM_connector
 from azure.search.documents.models import VectorizedQuery
 
 from services.database import Database
 
 
+from services.database import Database
+
+
 class QuestionRetriever:
+    @staticmethod
     @staticmethod
     def get_related_question(question):
         results = {}
@@ -17,7 +25,9 @@ class QuestionRetriever:
         
         related_questions = search_client.search(
             None, top=1, vector_queries=[VectorizedQuery(vector=vector_question, fields="question_vector")]
+            None, top=1, vector_queries=[VectorizedQuery(vector=vector_question, fields="question_vector")]
         )
+        
         
         for question_dict in related_questions:
             question_text = question_dict.get("question")
@@ -55,11 +65,13 @@ class SchemaRetriever:
 
         related_table = search_client.search(
             None, top=4, vector_queries=[VectorizedQuery(vector=vector_question, fields="description_vector")]
+            None, top=4, vector_queries=[VectorizedQuery(vector=vector_question, fields="description_vector")]
         )
 
         for table in related_table:
             table_name = table.get("schema_name")
             table_info = table.get("schema_info")
+
 
             if table_name and table_info:
                 results[table_name] = table_info

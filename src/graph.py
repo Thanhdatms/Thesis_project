@@ -3,11 +3,13 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 
 from services.vector_service import SchemaRetriever, QuestionRetriever, SQLHandler
+from services.vector_service import SchemaRetriever, QuestionRetriever, SQLHandler
 from services.prompt_function import sql_retriever_template, final_answer_template
 from services.LLM_connector import to_vector, get_openai_response
 from langgraph.checkpoint.memory import  MemorySaver
 from langgraph.config import get_stream_writer
 
+from services.prompt_template import ERROR_RESPONSE, REGENERATE_SQL_TEMPLATE
 from services.prompt_template import ERROR_RESPONSE, REGENERATE_SQL_TEMPLATE
 class AgentState(TypedDict):
     messages: Annotated[list, add_messages]
@@ -16,6 +18,7 @@ class AgentState(TypedDict):
     query_embedding: List[float]
     related_queries: List[str]
     related_schemas: List[str]
+    sql_query: str
     sql_query: str
 
     sql_generation: str
@@ -56,6 +59,7 @@ def error_handler(state: AgentState) -> AgentState:
 
 def sql_generation(state: AgentState) -> AgentState:
     query_prompt = state.get("sql_query")
+    query_prompt = state.get("sql_query")
     sql_generation = get_openai_response(query_prompt)
     extracted_sql = SQLHandler.extract_sql_response(sql_generation)
     state["sql_generation"] = extracted_sql
@@ -63,8 +67,10 @@ def sql_generation(state: AgentState) -> AgentState:
 
     
 async def sql_verifier(state: AgentState) -> AgentState:
+async def sql_verifier(state: AgentState) -> AgentState:
     count = 3
     verify_status = False
+
 
     while count > 0:
         try:
@@ -89,9 +95,11 @@ async def sql_verifier(state: AgentState) -> AgentState:
                 sql_query=sql_generation,
                 error_message=error_message
             )
+            print(regenerate_prompt)
             sql_generation = get_openai_response(regenerate_prompt)
  
             state["sql_generation"] = sql_generation
+            print(f"Count: {count}")
             print(f"Count: {count}")
             if count == 0:
                 verify_status = False
@@ -156,6 +164,10 @@ app = graph.compile(checkpointer=memory)
 graph_viz = app.get_graph()
 graph_viz.draw_mermaid_png(output_file_path="langgraph_workflow.png")
 print("LangGraph workflow exported to langgraph_workflow.png")
+
+
+
+
 
 
 

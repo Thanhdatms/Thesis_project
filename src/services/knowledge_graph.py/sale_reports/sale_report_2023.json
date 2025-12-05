@@ -1,0 +1,277 @@
+{
+    "year": 2023,
+    "quarters": {
+        "Q1": {
+            "January": {
+                "customer_opportunities": {
+                    "actual": 600,
+                    "forecast": 630,
+                    "variance": -30
+                },
+                "customer_transactions": {
+                    "actual": 560,
+                    "forecast": 500,
+                    "variance": 60
+                },
+                "conversion_rate": {
+                    "actual": "92%",
+                    "forecast": "90%",
+                    "variance": 0.02
+                },
+                "total_sales_revenue": {
+                    "actual": 160000,
+                    "forecast": 140000,
+                    "variance": 20000
+                }
+            },
+            "February": {
+                "customer_opportunities": {
+                    "actual": 680,
+                    "forecast": 720,
+                    "variance": -40
+                },
+                "customer_transactions": {
+                    "actual": 840,
+                    "forecast": 760,
+                    "variance": 80
+                },
+                "conversion_rate": {
+                    "actual": 790,
+                    "forecast": 740,
+                    "variance": 50
+                },
+                "total_sales_revenue": {
+                    "actual": 175000,
+                    "forecast": 155000,
+                    "variance": 20000
+                }
+            },
+            "March": {
+                "customer_opportunities": {
+                    "actual": 720,
+                    "forecast": 750,
+                    "variance": -30
+                },
+                "customer_transactions": {
+                    "actual": 910,
+                    "forecast": 850,
+                    "variance": 60
+                },
+                "conversion_rate": {
+                    "actual": 860,
+                    "forecast": 810,
+                    "variance": 50
+                },
+                "total_sales_revenue": {
+                    "actual": 185000,
+                    "forecast": 165000,
+                    "variance": 20000
+                }
+            }
+        },
+        "Q2": {
+            "April": {
+                "customer_opportunities": {
+                    "actual": 630,
+                    "forecast": 670,
+                    "variance": -40
+                },
+                "customer_transactions": {
+                    "actual": 570,
+                    "forecast": 510,
+                    "variance": 60
+                },
+                "conversion_rate": {
+                    "actual": "91%",
+                    "forecast": "90%",
+                    "variance": 0.01
+                },
+                "total_sales_revenue": {
+                    "actual": 150000,
+                    "forecast": 140000,
+                    "variance": 10000
+                }
+            },
+            "May": {
+                "customer_opportunities": {
+                    "actual": 740,
+                    "forecast": 770,
+                    "variance": -30
+                },
+                "customer_transactions": {
+                    "actual": 1000,
+                    "forecast": 880,
+                    "variance": 120
+                },
+                "conversion_rate": {
+                    "actual": 930,
+                    "forecast": 880,
+                    "variance": 50
+                },
+                "total_sales_revenue": {
+                    "actual": 195000,
+                    "forecast": 170000,
+                    "variance": 25000
+                }
+            },
+            "June": {
+                "customer_opportunities": {
+                    "actual": 770,
+                    "forecast": 800,
+                    "variance": -30
+                },
+                "customer_transactions": {
+                    "actual": 1030,
+                    "forecast": 900,
+                    "variance": 130
+                },
+                "conversion_rate": {
+                    "actual": 960,
+                    "forecast": 910,
+                    "variance": 50
+                },
+                "total_sales_revenue": {
+                    "actual": 200000,
+                    "forecast": 175000,
+                    "variance": 25000
+                }
+            }
+        },
+        "Q3": {
+            "July": {
+                "customer_opportunities": {
+                    "actual": 650,
+                    "forecast": 690,
+                    "variance": -40
+                },
+                "customer_transactions": {
+                    "actual": 590,
+                    "forecast": 530,
+                    "variance": 60
+                },
+                "conversion_rate": {
+                    "actual": "90%",
+                    "forecast": "89%",
+                    "variance": 0.01
+                },
+                "total_sales_revenue": {
+                    "actual": 155000,
+                    "forecast": 140000,
+                    "variance": 15000
+                }
+            },
+            "August": {
+                "customer_opportunities": {
+                    "actual": 760,
+                    "forecast": 800,
+                    "variance": -40
+                },
+                "customer_transactions": {
+                    "actual": 1040,
+                    "forecast": 890,
+                    "variance": 150
+                },
+                "conversion_rate": {
+                    "actual": 970,
+                    "forecast": 910,
+                    "variance": 60
+                },
+                "total_sales_revenue": {
+                    "actual": 210000,
+                    "forecast": 180000,
+                    "variance": 30000
+                }
+            },
+            "September": {
+                "customer_opportunities": {
+                    "actual": 780,
+                    "forecast": 820,
+                    "variance": -40
+                },
+                "customer_transactions": {
+                    "actual": 1080,
+                    "forecast": 920,
+                    "variance": 160
+                },
+                "conversion_rate": {
+                    "actual": 1000,
+                    "forecast": 940,
+                    "variance": 60
+                },
+                "total_sales_revenue": {
+                    "actual": 215000,
+                    "forecast": 185000,
+                    "variance": 30000
+                }
+            }
+        },
+        "Q4": {
+            "October": {
+                "customer_opportunities": {
+                    "actual": 700,
+                    "forecast": 740,
+                    "variance": -40
+                },
+                "customer_transactions": {
+                    "actual": 610,
+                    "forecast": 550,
+                    "variance": 60
+                },
+                "conversion_rate": {
+                    "actual": "89%",
+                    "forecast": "90%",
+                    "variance": -0.01
+                },
+                "total_sales_revenue": {
+                    "actual": 160000,
+                    "forecast": 145000,
+                    "variance": 15000
+                }
+            },
+            "November": {
+                "customer_opportunities": {
+                    "actual": 780,
+                    "forecast": 810,
+                    "variance": -30
+                },
+                "customer_transactions": {
+                    "actual": 1140,
+                    "forecast": 960,
+                    "variance": 180
+                },
+                "conversion_rate": {
+                    "actual": 1050,
+                    "forecast": 980,
+                    "variance": 70
+                },
+                "total_sales_revenue": {
+                    "actual": 220000,
+                    "forecast": 190000,
+                    "variance": 30000
+                }
+            },
+            "December": {
+                "customer_opportunities": {
+                    "actual": 820,
+                    "forecast": 850,
+                    "variance": -30
+                },
+                "customer_transactions": {
+                    "actual": 1200,
+                    "forecast": 1020,
+                    "variance": 180
+                },
+                "conversion_rate": {
+                    "actual": 1120,
+                    "forecast": 1040,
+                    "variance": 80
+                },
+                "total_sales_revenue": {
+                    "actual": 230000,
+                    "forecast": 200000,
+                    "variance": 30000
+                }
+            }
+        }
+    }
+}
