@@ -166,26 +166,26 @@ def create_quater_report_year(file_path):
 # --------------------------------------------
 # RUN INITIALIZATION
 # --------------------------------------------
-if __name__ == "__main__":
-    # create_root_finance_report()
-    # create_type_finance_report()
+# if __name__ == "__main__":
+#     # create_root_finance_report()
+#     # create_type_finance_report()
     
-    root_path_2019 = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_report_2019.json'
-    root_path_2020 = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_report_2020.json'
-    root_path_2021 = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_report_2021.json'
-    root_path_2022 = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_report_2022.json'
-    root_path_2023 = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_report_2023.json'
-    root_path_2024 = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_report_2024.json'
+#     root_path_2019 = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_report_2019.json'
+#     root_path_2020 = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_report_2020.json'
+#     root_path_2021 = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_report_2021.json'
+#     root_path_2022 = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_report_2022.json'
+#     root_path_2023 = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_report_2023.json'
+#     root_path_2024 = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_report_2024.json'
 
-    revenue_report = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_year_report.json'
+#     revenue_report = r'C:\Users\ADMIN\Documents\Thesis\Thesis_project\src\services\knowledge_graph.py\sale_reports\sale_year_report.json'
 
-    create_quater_report_year(file_path=root_path_2019)
-    create_quater_report_year(file_path=root_path_2020)
-    create_quater_report_year(file_path=root_path_2021)
-    create_quater_report_year(file_path=root_path_2022)
-    create_quater_report_year(file_path=root_path_2023)
-    create_quater_report_year(file_path=root_path_2024)
+#     create_quater_report_year(file_path=root_path_2019)
+#     create_quater_report_year(file_path=root_path_2020)
+#     create_quater_report_year(file_path=root_path_2021)
+#     create_quater_report_year(file_path=root_path_2022)
+#     create_quater_report_year(file_path=root_path_2023)
+#     create_quater_report_year(file_path=root_path_2024)
 
-    # create_revenue_report_year(file_path=revenue_report)
+#     # create_revenue_report_year(file_path=revenue_report)
 
-    print("✔ Knowledge graph initialization completed successfully.")
+#     print("✔ Knowledge graph initialization completed successfully.")

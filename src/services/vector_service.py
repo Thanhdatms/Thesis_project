@@ -1,9 +1,4 @@
 import re
-
-import asyncpg
-from fastapi import FastAPI
-import re
-
 import asyncpg
 from fastapi import FastAPI
 from services import LLM_connector
@@ -17,14 +12,12 @@ from services.database import Database
 
 class QuestionRetriever:
     @staticmethod
-    @staticmethod
     def get_related_question(question):
         results = {}
         search_client = LLM_connector.AzureAISearchQuestionConnection.get_instance()
         vector_question = LLM_connector.to_vector(question)
         
         related_questions = search_client.search(
-            None, top=1, vector_queries=[VectorizedQuery(vector=vector_question, fields="question_vector")]
             None, top=1, vector_queries=[VectorizedQuery(vector=vector_question, fields="question_vector")]
         )
         
@@ -64,7 +57,6 @@ class SchemaRetriever:
         vector_question = LLM_connector.to_vector(question)
 
         related_table = search_client.search(
-            None, top=4, vector_queries=[VectorizedQuery(vector=vector_question, fields="description_vector")]
             None, top=4, vector_queries=[VectorizedQuery(vector=vector_question, fields="description_vector")]
         )
 

@@ -1,17 +1,17 @@
 import os
 import json
 from dotenv import load_dotenv
-from knowledge_graph_template import SUMMARY_GREMLIN_TEMPLATE, SUMMARY_QUESTION
 # IMPORTANT FIX FOR WINDOWS
 import asyncio
 from openai import OpenAI
 from gremlin_python.driver import client as gremlin_client
 import sys
+
+from services.knowledge_graph.knowledge_graph_template import QUESTION_ROUTER_TEMPLATE, SUMMARY_GREMLIN_TEMPLATE, SUMMARY_QUESTION
 if sys.platform.startswith("win"):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from gremlin_python.driver import client, serializer
-from knowledge_graph_template import ROUTER_TEMPLATE
 import json
 from openai import OpenAI
 
@@ -62,9 +62,7 @@ def get_knowledge_graph_data(question):
     print(new_question)
     # Extract text from LLM result
     new_question_text = new_question
-
-
-    gremlin_require_raw = get_llm_result(message=ROUTER_TEMPLATE.format(question=new_question_text))
+    gremlin_require_raw = get_llm_result(message=QUESTION_ROUTER_TEMPLATE.format(question=new_question_text))
 
     print("raw")
     print(gremlin_require_raw)
@@ -135,6 +133,6 @@ def get_revenue(list_data):
 
 
 
-data = get_knowledge_graph_data(question='what is the revenue of product Corsair_K95_RGB_Platinum')
-print(data)
+# data = get_knowledge_graph_data(question='what is the revenue of product Corsair_K95_RGB_Platinum')
+# print(data)
 

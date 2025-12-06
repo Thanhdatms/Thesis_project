@@ -102,7 +102,7 @@ cart_items,"The cart_items table stores information about individual products ad
 );
 ALTER TABLE ""cart_items"" ADD FOREIGN KEY (""cart_item_cart_id"") REFERENCES ""cart"" (""cart_id"");
 ALTER TABLE ""cart_items"" ADD FOREIGN KEY (""cart_item_product_id"") REFERENCES ""products"" (""product_id"");"
-orders,"The orders table stores information about customer purchase transactions within the system. Each record represents a single order, identified by a unique order_id. The order_user_id column references the user who placed the order. The order_total field records the total monetary amount of the order in U.S. dollars (USD), including all purchased items and applied discounts. The order_status column indicates the current state of the order (pending, paid, shipped, or cancelled). The order_created_at and order_updated_at fields record when the order was first placed and when it was last modified.","CREATE TABLE ""orders"" (
+orders,"The orders table stores information about users (customers, consumers, buyers) purchase transactions within the system. Each record represents a single order, identified by a unique order_id. The order_user_id column references the user who placed the order. The order_total field records the total monetary amount of the order in U.S. dollars (USD), including all purchased items and applied discounts. The order_status column indicates the current state of the order (pending, paid, shipped, or cancelled). The order_created_at and order_updated_at fields record when the order was first placed and when it was last modified.","CREATE TABLE ""orders"" (
     ""order_id"" int PRIMARY KEY NOT NULL,
     ""order_user_id"" int NOT NULL,
     ""order_total"" decimal(10, 2) NOT NULL,
@@ -121,7 +121,7 @@ order_items,"The order_items table stores detailed information about the individ
 );
 ALTER TABLE ""order_items"" ADD FOREIGN KEY (""order_item_order_id"") REFERENCES ""orders"" (""order_id"");
 ALTER TABLE ""order_items"" ADD FOREIGN KEY (""order_item_product_id"") REFERENCES ""products"" (""product_id"");"
-users,"The users table stores essential account information for each registered customer in the system. Every record represents one user, uniquely identified by user_id. The user_name field contains the user’s display or full name, while user_email serves as a unique contact and login identifier. The user_password field securely stores the user’s encrypted authentication credential. The user_created_at and user_updated_at timestamps track when the account was initially created and last modified.","CREATE TABLE ""users"" (
+users,"The users (customers, consumers, buyers) table stores essential account information for each registered customer in the system. Every record represents one user, uniquely identified by user_id. The user_name field contains the user�s display or full name, while user_email serves as a unique contact and login identifier. The user_password field securely stores the user�s encrypted authentication credential. The user_created_at and user_updated_at timestamps track when the account was initially created and last modified.","CREATE TABLE ""users"" (
   ""user_id"" int PRIMARY KEY NOT NULL,
   ""user_name"" varchar(255) NOT NULL,
   ""user_email"" varchar(255) NOT NULL,
@@ -167,7 +167,7 @@ shipments,"The shipments table stores information about the delivery of customer
 );
 ALTER TABLE ""shipments"" ADD FOREIGN KEY (""shipment_order_id"") REFERENCES ""orders"" (""order_id"");
 ALTER TABLE ""shipments"" ADD FOREIGN KEY (""shipment_address_id"") REFERENCES ""addresses"" (""address_id"");"
-returns,"The returns table records information about product returns initiated by customers. Each entry corresponds to a return request linked to a specific order through return_order_id and to the customer who made the request via return_user_id. It captures the reason for the return, the current status of the return process (“requested,” “approved,” or “completed”), and timestamps for when the return was created and last updated.","CREATE TABLE ""returns"" (
+returns,"The returns table records information about product returns initiated by users (customers, consumers, buyers). Each entry corresponds to a return request linked to a specific order through return_order_id and to the user who made the request via return_user_id. It captures the reason for the return, the current status of the return process (�requested,� �approved,� or �completed�), and timestamps for when the return was created and last updated.","CREATE TABLE ""returns"" (
   ""return_id"" int PRIMARY KEY NOT NULL,
   ""return_order_id"" int NOT NULL,
   ""return_user_id"" int NOT NULL,
@@ -179,7 +179,7 @@ returns,"The returns table records information about product returns initiated b
 );
 ALTER TABLE ""returns"" ADD FOREIGN KEY (""return_order_id"") REFERENCES ""orders"" (""order_id"");
 ALTER TABLE ""returns"" ADD FOREIGN KEY (""return_user_id"") REFERENCES ""users"" (""user_id"");"
-payments,"The payments table stores information about payments made for customer orders. Each record corresponds to a single payment transaction linked to an order through payment_order_id. It captures the payment method used (credit card, PayPal, or bank transfer), the current payment status (“pending,” “completed,” or “failed”), and timestamps for when the payment record was created and last updated.","CREATE TABLE ""payments"" (
+payments,"The payments table stores information about payments made for users (customers, consumers, buyers) orders. Each record corresponds to a single payment transaction linked to an order through payment_order_id. It captures the payment method used (credit card, PayPal, or bank transfer), the current payment status (�pending,� �completed,� or �failed�), and timestamps for when the payment record was created and last updated.","CREATE TABLE ""payments"" (
   ""payment_id"" int PRIMARY KEY NOT NULL,
   ""payment_order_id"" int NOT NULL,
   ""payment_method"" varchar(255) NOT NULL
@@ -200,7 +200,7 @@ payments,"The payments table stores information about payments made for customer
   ""payment_updated_at"" timestamp NOT NULL
 );
 ALTER TABLE ""payments"" ADD FOREIGN KEY (""payment_order_id"") REFERENCES ""orders"" (""order_id"");"
-transactions,"The transactions table stores records of financial transactions associated with customer orders. Each record represents a payment event linked to a specific order via transaction_order_id and to a corresponding payment record through transaction_payment_id. It includes the transaction’s current status ( “pending,” “successful,” or “failed”) and timestamps indicating when the transaction was created and last updated.","CREATE TABLE ""transactions"" (
+transactions,"The transactions table stores records of financial transactions associated with users (customers, consumers, buyers) orders. Each record represents a payment event linked to a specific order via transaction_order_id and to a corresponding payment record through transaction_payment_id. It includes the transaction�s current status ( �pending,� �successful,� or �failed�) and timestamps indicating when the transaction was created and last updated.","CREATE TABLE ""transactions"" (
   ""transaction_id"" int PRIMARY KEY NOT NULL,
   ""transaction_order_id"" int NOT NULL,
   ""transaction_payment_id"" int NOT NULL ,

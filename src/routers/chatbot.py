@@ -21,7 +21,7 @@ async def post_prompt(prompt_request: PromptRequest, request: Request):
         initial_state = {
             "user_query": user_prompt
         }
-        
+        print(f"Initial State: {initial_state}")
         final_state = await langgraph_app.ainvoke(initial_state, config={"thread_id": thread_id})
         print(f"Final State: {final_state["final_response"]}")
         return JSONResponse(

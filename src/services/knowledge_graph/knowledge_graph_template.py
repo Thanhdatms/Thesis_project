@@ -1,4 +1,4 @@
-ROUTER_TEMPLATE = """
+QUESTION_ROUTER_TEMPLATE = """
 You are the router to classify the question as being about financial reports or information in the handbook.
 
 If the question is about year revenue reports:
@@ -42,7 +42,7 @@ Follow this example format:
 
 Question: {question}
 
-Only return JSON in the formats above.
+Only return JSON in the formats above. Do NOT wrap the JSON in ```json or any code block.
 """
 
 SUMMARY_GREMLIN_TEMPLATE = """
@@ -50,7 +50,7 @@ Please summarize the JSON data below based on the question in plain text:
 Question: {question}
 Data: {data}
 
-Only return the summarized content.
+Only return the summarized content. Do NOT wrap the JSON in ```json or any code block.
 """
 
 SUMMARY_QUESTION = """

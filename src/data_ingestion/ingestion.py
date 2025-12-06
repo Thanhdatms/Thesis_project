@@ -2,10 +2,6 @@ import csv
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-import csv
-import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
 from services.LLM_connector import to_vector
@@ -17,11 +13,6 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from dotenv import load_dotenv
-
-
-# Load environment variables from .env file
-load_dotenv()
 
 
 def create_schema_documents(search_client, schemas_list: list):
@@ -97,7 +88,6 @@ def create_question_documents(search_client, questions_list: list):
         search_client.upload_documents(documents=documents)
 
 def load_data(schemas_path, questions_path):
-def load_data(schemas_path, questions_path):
     """
     Input:
         schemas_list: list of schema dicts
@@ -127,29 +117,6 @@ def load_data(schemas_path, questions_path):
                 "question": row["question"],
                 "sql": row["sql"],
             })
-    # logic loading data into format
-    schemas_list = []
-    questions_list = []
-    schemas_path = os.path.abspath("public/schema.csv")
-    with open(schemas_path, 'r', encoding='utf-8', newline='') as f:
-        # logic loading data into format 
-        reader = csv.DictReader(f)
-        for row in reader:
-            schemas_list.append({
-                "schema_name": row["name"],
-                "description": row["description"],
-                "schema_info": row["info"],
-            })
-
-    with open(questions_path, 'r', encoding='utf-8', newline='') as f:
-        # logic loading data into format
-        reader = csv.DictReader(f)
-        for row in reader:
-            questions_list.append({
-                "question": row["question"],
-                "sql": row["sql"],
-            })
-    # logic loading data into format
     return schemas_list, questions_list
 
 
@@ -161,31 +128,18 @@ if __name__ == "__main__":
         schemas_path=schema_path, 
         questions_path=questions_path
     )
-    
-    schema_path = os.path.abspath("public/schema.csv")
-    questions_path = os.path.abspath("public/questions.csv")
-    schemas_list, questions_list = load_data(
-        schemas_path=schema_path, 
-        questions_path=questions_path
-    )
-    
     # Initialize Azure AI Search client
     schemas_search_client = SearchClient(
         endpoint=os.getenv("AZURE_SEARCH_ENDPOINT"),
-        endpoint=os.getenv("AZURE_SEARCH_ENDPOINT"),
         index_name=os.getenv("AZURE_SEARCH_SCHEMAS_INDEX"),
-        credential=AzureKeyCredential(os.getenv("AZURE_SEARCH_API_KEY"))
         credential=AzureKeyCredential(os.getenv("AZURE_SEARCH_API_KEY"))
     )
     questions_search_client = SearchClient(
         endpoint=os.getenv("AZURE_SEARCH_ENDPOINT"),
-        endpoint=os.getenv("AZURE_SEARCH_ENDPOINT"),
         index_name=os.getenv("AZURE_SEARCH_QUESTIONS_INDEX"),
-        credential=AzureKeyCredential(os.getenv("AZURE_SEARCH_API_KEY"))
         credential=AzureKeyCredential(os.getenv("AZURE_SEARCH_API_KEY"))
     )
 
-    # # Create and upload schema documents
     # # Create and upload schema documents
     create_schema_documents(schemas_search_client, schemas_list)
     # # Create and upload question documents

@@ -6,28 +6,6 @@ from openai import AzureOpenAI
 
 load_dotenv()
 
-endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-api_key = os.getenv("AZURE_OPENAI_API_KEY")
-api_version = os.getenv("AZURE_OPENAI_API_VERSION")
-from dotenv import load_dotenv
-from openai import AzureOpenAI
-
-load_dotenv()
-
-endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-api_key = os.getenv("AZURE_OPENAI_API_KEY")
-api_version = os.getenv("AZURE_OPENAI_API_VERSION")
-
-client = AzureOpenAI(
-    azure_endpoint=endpoint,
-    api_key=api_key,
-    api_version=api_version
-)
-client = AzureOpenAI(
-    azure_endpoint=endpoint,
-    api_key=api_key,
-    api_version=api_version
-)
 
 def to_vector(text: str) -> list[float]:
     """
@@ -38,12 +16,22 @@ def to_vector(text: str) -> list[float]:
         vector: list of floats
     """
     # Implementation to get vector from OpenAI
+    
+    endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+    api_key = os.getenv("AZURE_OPENAI_API_KEY")
+    api_version = os.getenv("AZURE_OPENAI_API_VERSION")
+
+    client = AzureOpenAI(
+        azure_endpoint=endpoint,
+        api_key=api_key,
+        api_version=api_version
+    )
+
     model = "text-embedding-ada-002"
     response = client.embeddings.create(
         input=text,
         model=model
     )
-    vector = response.data[0].embedding
     vector = response.data[0].embedding
     return vector
 
@@ -55,16 +43,7 @@ def get_openai_response(prompt: str) -> str:
     Output:
         response: str
     """
-    
-    client = AzureOpenAI(
-        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT_CHAT"),
-        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-        api_version=os.getenv("AZURE_OPENAI_API_VERSION_CHAT")
-    )
-    
-    model = "Llama-4-Maverick-17B-128E-Instruct-FP8"
-
-    
+        
     client = AzureOpenAI(
         azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT_CHAT"),
         api_key=os.getenv("AZURE_OPENAI_API_KEY"),
@@ -79,6 +58,7 @@ def get_openai_response(prompt: str) -> str:
             {"role": "user", "content": prompt}
         ]
     )
+    
     return response.choices[0].message.content
 
 def get_sql_response(prompt: str) -> str:
@@ -89,6 +69,17 @@ def get_sql_response(prompt: str) -> str:
     Output:
         response: str
     """
+    
+    endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+    api_key = os.getenv("AZURE_OPENAI_API_KEY")
+    api_version = os.getenv("AZURE_OPENAI_API_VERSION")
+
+    client = AzureOpenAI(
+        azure_endpoint=endpoint,
+        api_key=api_key,
+        api_version=api_version
+    )
+
     model = "gpt-4o"
     response = client.chat.completions.create(
         model=model,
@@ -108,16 +99,12 @@ class AzureAISearchQuestionConnection:
             endpoint = os.getenv("AZURE_SEARCH_ENDPOINT")
             index_name = os.getenv("AZURE_SEARCH_QUESTIONS_INDEX")
             api_key = os.getenv("AZURE_SEARCH_API_KEY")
-            endpoint = os.getenv("AZURE_SEARCH_ENDPOINT")
-            index_name = os.getenv("AZURE_SEARCH_QUESTIONS_INDEX")
-            api_key = os.getenv("AZURE_SEARCH_API_KEY")
 
-            credential = AzureKeyCredential(api_key)
+
             credential = AzureKeyCredential(api_key)
             cls._instance = SearchClient(
                 endpoint=endpoint,
                 index_name=index_name,
-                credential=credential
                 credential=credential
             )
         return cls._instance   
@@ -135,16 +122,9 @@ class AzureAISearchSchemaConnection:
 
             credential = AzureKeyCredential(api_key)
             
-            endpoint = os.getenv("AZURE_SEARCH_ENDPOINT")
-            index_name = os.getenv("AZURE_SEARCH_SCHEMAS_INDEX")
-            api_key = os.getenv("AZURE_SEARCH_API_KEY")
-
-            credential = AzureKeyCredential(api_key)
-            
             cls._instance = SearchClient(
                 endpoint=endpoint,
                 index_name=index_name,
-                credential=credential
                 credential=credential
             )
         return cls._instance

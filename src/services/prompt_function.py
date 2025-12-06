@@ -20,7 +20,7 @@ def sql_retriever_template(related_table, related_question, question):
     
     return SQL_RETRIEVER_TEMPLATE.format(related_table=formatted_table, related_question=formatted_question, question=question)
 
-def final_answer_template(question, answer):
+def final_answer_template(question, structured_response="", unstructured_response=""):
     """
     Generate the final answer prompt template.
 
@@ -31,4 +31,4 @@ def final_answer_template(question, answer):
     Returns:
         str: The formatted final answer prompt.
     """
-    return FINAL_ANSWER.format(question=question, answer = answer)
+    return FINAL_ANSWER.format(question=question, structured_answer=structured_response, unstructured_answer=unstructured_response)
